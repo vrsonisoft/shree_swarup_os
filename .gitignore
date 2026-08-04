@@ -9,6 +9,12 @@
 /script/storage/installed
 /script/bootstrap/cache/*
 
+# Ignore user uploads and qrcodes
+/script/public/user-uploads/*
+!/script/public/user-uploads/.htaccess
+/script/public/qrcodes/*
+!/script/public/qrcodes/.htaccess
+
 # Ignore scratch and local temp files
 /scratch/
 /.vscode/
