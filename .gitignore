@@ -1,0 +1,18 @@
+# Ignore node modules and vendor in script
+/script/node_modules/
+/script/vendor/
+/script/.env
+/script/public/build/
+/script/public/hot/
+/script/public/storage/
+/script/storage/*.key
+/script/storage/installed
+/script/bootstrap/cache/*
+
+# Ignore scratch and local temp files
+/scratch/
+/.vscode/
+/.idea/
+/.fleet/
+*.zip
+.DS_Store
