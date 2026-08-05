@@ -8,14 +8,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
  
 
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ $restaurant->uploadFavIconAppleTouchIconUrl }}">
-    <link rel="icon" type="image/png" sizes="192x192" href="{{ $restaurant->uploadFavIconAndroidChrome192Url }}">
-    <link rel="icon" type="image/png" sizes="512x512" href="{{ $restaurant->uploadFavIconAndroidChrome512Url }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ $restaurant->uploadFavIcon16Url }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ $restaurant->uploadFavIcon32Url }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ $restaurant->uploadFavIconAppleTouchIconUrl }}?v=1">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ $restaurant->uploadFavIconAndroidChrome192Url }}?v=1">
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ $restaurant->uploadFavIconAndroidChrome512Url }}?v=1">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ $restaurant->uploadFavIcon16Url }}?v=1">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ $restaurant->uploadFavIcon32Url }}?v=1">
     <link rel="stylesheet" href="{{ asset('vendor/pikaday.css') }}" />
 
-    <link rel="shortcut icon" href="{{ $restaurant->faviconUrl }}">
+    <link rel="shortcut icon" href="{{ $restaurant->faviconUrl }}?v=1">
 
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" content="{{ $restaurant->logoUrl }}">
