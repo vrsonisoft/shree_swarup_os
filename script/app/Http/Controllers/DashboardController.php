@@ -34,7 +34,7 @@ class DashboardController extends Controller
 
         $smtpConfigured = $smtp ? (($smtp->mail_driver == 'smtp' && $smtp->verified) || $smtp->mail_driver != 'smtp') : false;
         $cronConfigured = $global ? ($global->hide_cron_job == 1) : false;
-        $appNameChanged = $global ? ($global->name != 'TableTrack') : false;
+        $appNameChanged = $global ? ($global->name != 'ShreeSwarupOS') : false;
 
         // If any of the onboarding steps are not completed OR URL has "public", redirect to the onboarding page
         if (($urlHasPublic || !$smtpConfigured || !$cronConfigured || !$appNameChanged) && !app()->environment('development')) {

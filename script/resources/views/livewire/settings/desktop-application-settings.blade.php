@@ -46,8 +46,8 @@
                                 <div class="w-16 h-16 flex items-center justify-center mx-auto mb-3">
                                     <img src="{{ asset('img/icon.png') }}" alt="TableTrack Desktop Printing App" class="w-14 h-14 object-contain">
                                 </div>
-                                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">TableTrack Desktop Printing App</h3>
-                                <p class="text-xs text-gray-600 dark:text-gray-300">Download the official TableTrack Desktop Printing App for direct printing</p>
+                                <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">ShreeSwarupOS Desktop Printing App</h3>
+                                <p class="text-xs text-gray-600 dark:text-gray-300">Download the official ShreeSwarupOS Desktop Printing App for direct printing</p>
                             </div>
                         </div>
                         @endif
@@ -56,7 +56,7 @@
                         <div class="flex-1 p-4 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700/40 flex flex-col justify-center">
                             <div class="text-center mb-4">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">@lang('superadmin.desktopAppDemo')</h3>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Watch how the TableTrack desktop application works</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Watch how the ShreeSwarupOS desktop application works</p>
                             </div>
                             <div class="flex justify-center">
                                 <a href="https://www.youtube.com/watch?v=KKla4E_e_tY"

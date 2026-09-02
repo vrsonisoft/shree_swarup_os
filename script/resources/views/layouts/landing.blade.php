@@ -49,6 +49,67 @@
     @livewireStyles
 
     <style>
+        html, body {
+            overflow-x: hidden;
+        }
+        /* Mobile Drawer Buttons */
+        #mobile-menu-drawer .btn-drawer-signup {
+          background-color: #00B692 !important;
+          color: #ffffff !important;
+          font-weight: 700 !important;
+          display: block !important;
+          width: 100% !important;
+          text-align: center !important;
+          padding: 14px 0 !important;
+          border-radius: 12px !important;
+          box-shadow: 0 4px 14px rgba(0, 182, 146, 0.3) !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.5px !important;
+          font-size: 14px !important;
+          border: none !important;
+          text-decoration: none !important;
+        }
+        #mobile-menu-drawer .btn-drawer-signup:hover {
+          background-color: #009c7d !important;
+          color: #ffffff !important;
+        }
+        #mobile-menu-drawer .btn-drawer-login {
+          background-color: transparent !important;
+          color: #374151 !important;
+          font-weight: 600 !important;
+          display: block !important;
+          width: 100% !important;
+          text-align: center !important;
+          padding: 12px 0 !important;
+          border-radius: 12px !important;
+          border: 1px solid #d1d5db !important;
+          text-decoration: none !important;
+        }
+        html.dark #mobile-menu-drawer .btn-drawer-login {
+          color: #e5e7eb !important;
+          border-color: #4b5563 !important;
+        }
+        /* Mobile Drawer Text Colors in Dark & Light Mode */
+        #mobile-menu-drawer a.drawer-nav-link {
+          color: #1f2937 !important;
+        }
+        #mobile-menu-drawer a.drawer-nav-link:hover {
+          color: #00b692 !important;
+        }
+        #mobile-menu-drawer a.drawer-nav-link.active-nav-link {
+          color: #00b692 !important;
+          font-weight: 700 !important;
+        }
+        html.dark #mobile-menu-drawer a.drawer-nav-link {
+          color: #f3f4f6 !important;
+        }
+        html.dark #mobile-menu-drawer a.drawer-nav-link:hover {
+          color: #00b692 !important;
+        }
+        html.dark #mobile-menu-drawer a.drawer-nav-link.active-nav-link {
+          color: #00b692 !important;
+          font-weight: 700 !important;
+        }
         :root {
             --color-base: 0, 182, 146 !important;
             --theme-color: #00B692 !important;
@@ -81,41 +142,22 @@
     @include('sections.offline-banner')
     <div class="mx-auto max-w-lg lg:max-w-screen-xl min-h-svh shadow-md lg:shadow-none">
         <header class="lg:hidden">
-            <nav class="bg-white border-gray-200 px-4 py-2.5 dark:bg-gray-800 dark:text-gray">
-                <div class="flex flex-wrap justify-between items-center mx-auto">
-                    <a href="{{ url('/') }}" class="flex items-center gap-2.5 app-logo" style="display:inline-flex; align-items:center; text-decoration:none;">
-                        <img src="{{ asset('img/logo.png') }}" class="w-[52px] h-[52px] object-contain rounded-md shrink-0" style="height:52px; width:52px; max-height:52px; max-width:52px; object-fit:contain; border-radius:6px; flex-shrink:0;" alt="ShreeSwarupOS Logo" />
-                        <span class="logo-text" style="font-size:19px; font-family:'Montserrat', 'Plus Jakarta Sans', sans-serif; font-weight:900; letter-spacing:0.5px; text-transform:uppercase; display:inline-flex; align-items:center; line-height:1; margin-left:10px;">
+            <nav class="bg-white border-gray-200 px-3 py-2.5 dark:bg-gray-800 dark:text-gray">
+                <div class="flex flex-nowrap justify-between items-center w-full mx-auto">
+                    <a href="{{ url('/') }}" class="flex items-center gap-2 app-logo min-w-0 shrink" style="display:inline-flex; align-items:center; text-decoration:none;">
+                        <img src="{{ asset('img/logo.png') }}" class="w-[40px] h-[40px] object-contain rounded-md shrink-0" style="height:40px; width:40px; max-height:40px; max-width:40px; object-fit:contain; border-radius:6px; flex-shrink:0;" alt="ShreeSwarupOS Logo" />
+                        <span class="logo-text shrink min-w-0 overflow-hidden text-ellipsis" style="font-size:clamp(14px, 4.5vw, 18px); font-family:'Montserrat', 'Plus Jakarta Sans', sans-serif; font-weight:900; letter-spacing:0.5px; text-transform:uppercase; display:inline-flex; align-items:center; line-height:1; margin-left:6px; white-space:nowrap;">
                             <span style="color:#00B692; font-weight:900;">SHREESWARUP</span><span style="color:#9CB080; font-weight:900;">OS</span>
                         </span>
                     </a>
-                    <div class="flex flex-shrink-0 items-center gap-1 sm:gap-2">
+                    <div class="flex flex-shrink-0 items-center gap-2">
                         @if (languages()->count() > 1)
                             @livewire('shop.languageSwitcher')
                         @endif
 
-                        <button id="theme-toggle-mobile" data-tooltip-target="tooltip-toggle-mobile-landing" type="button"
-                            class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5">
-                            <svg id="theme-toggle-dark-icon-mobile" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-                            </svg>
-                            <svg id="theme-toggle-light-icon-mobile" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
-                                    fill-rule="evenodd" clip-rule="evenodd"></path>
-                            </svg>
-                        </button>
-                        <div id="tooltip-toggle-mobile-landing" role="tooltip"
-                            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip">
-                            @lang('app.toggleDarkMode')
-                            <div class="tooltip-arrow" data-popper-arrow></div>
-                        </div>
-
-                        <button data-collapse-toggle="mobile-menu-2" type="button"
-                            class="inline-flex items-center p-2 ltr:ml-0 rtl:mr-0 text-sm text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
-                            aria-controls="mobile-menu-2" aria-expanded="false">
+                        <button id="mobile-menu-toggle" type="button"
+                            class="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+                            aria-controls="mobile-menu-drawer" aria-expanded="false">
                             <span class="sr-only">@lang('menu.openMainMenu')</span>
                             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
                                 xmlns="http://www.w3.org/2000/svg">
@@ -123,109 +165,160 @@
                                     d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
                                     clip-rule="evenodd"></path>
                             </svg>
-                            <svg class="hidden w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd"
-                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                    clip-rule="evenodd"></path>
-                            </svg>
                         </button>
-                    </div>
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            const themeToggleDarkIconMobile = document.getElementById('theme-toggle-dark-icon-mobile');
-                            const themeToggleLightIconMobile = document.getElementById('theme-toggle-light-icon-mobile');
-                            const themeToggleBtnMobile = document.getElementById('theme-toggle-mobile');
-
-                            if (!themeToggleDarkIconMobile || !themeToggleLightIconMobile || !themeToggleBtnMobile) {
-                                return;
-                            }
-
-                            if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                                themeToggleLightIconMobile.classList.remove('hidden');
-                            } else {
-                                themeToggleDarkIconMobile.classList.remove('hidden');
-                            }
-
-                            themeToggleBtnMobile.addEventListener('click', function() {
-                                themeToggleDarkIconMobile.classList.toggle('hidden');
-                                themeToggleLightIconMobile.classList.toggle('hidden');
-
-                                if (localStorage.getItem('color-theme')) {
-                                    if (localStorage.getItem('color-theme') === 'light') {
-                                        document.documentElement.classList.add('dark');
-                                        localStorage.setItem('color-theme', 'dark');
-                                    } else {
-                                        document.documentElement.classList.remove('dark');
-                                        localStorage.setItem('color-theme', 'light');
-                                    }
-                                } else if (document.documentElement.classList.contains('dark')) {
-                                    document.documentElement.classList.remove('dark');
-                                    localStorage.setItem('color-theme', 'light');
-                                } else {
-                                    document.documentElement.classList.add('dark');
-                                    localStorage.setItem('color-theme', 'dark');
-                                }
-
-                                document.dispatchEvent(new Event('dark-mode'));
-                            });
-                        });
-                    </script>
-                    <div class="hidden justify-between items-center w-full bg-gray-50 dark:bg-gray-700 mt-4 rounded-md"
-                        id="mobile-menu-2">
-                        <ul class="flex flex-col font-medium ">
-                            <li>
-                                <a href="{{ url('/') }}"
-                                    class="block py-2 pr-4 pl-3 text-gray-700 rounded dark:text-white">@lang('menu.home')</a>
-                            </li>
-
-                            <li>
-                                <a href="{{ url('/') }}#icon-features"
-                                    class="block py-2 pr-4 pl-3 text-gray-700 rounded dark:text-white">@lang('landing.features')</a>
-                            </li>
-
-                            <li>
-                                <a href="{{ url('/') }}#simple-pricing"
-                                    class="block py-2 pr-4 pl-3 text-gray-700 rounded dark:text-white">@lang('landing.pricing')</a>
-                            </li>
-
-                            @php
-                                $customMenu = App\Models\CustomMenu::orderBy('sort_order')->get();
-                            @endphp
-
-                            @foreach ($customMenu as $menu)
-                                @if ($menu->is_active && $menu->position == 'header')
-                                    <li>
-                                        <a href="{{ route('customMenu', ['slug' => $menu->menu_slug]) }}" @class([
-                                            'transition-all duration-300 block py-2 pr-4 pl-3 rounded lg:bg-transparent text-gray-700 dark:text-white',
-                                        ])
-                                            aria-current="page">
-                                            {{ $menu->menu_name }}
-                                        </a>
-                                    </li>
-                                @endif
-                            @endforeach
-
-                            <li>
-                                <a href="{{ route('login') }}" wire:navigate
-                                    class="block py-2 pr-4 pl-3 text-gray-700 rounded dark:text-white">
-                                    @if (user())
-                                        @lang('menu.dashboard')
-                                    @else
-                                        @lang('app.login')
-                                    @endif
-                                </a>
-                            </li>
-
-                            <li>
-                                <a href="{{ route('restaurant_signup') }}" wire:navigate
-                                    class="block py-2 pr-4 pl-3 text-gray-700 rounded dark:text-white">@lang('landing.getStarted')</a>
-                            </li>
-                        </ul>
                     </div>
                 </div>
             </nav>
         </header>
+
+        <!-- FULLSCREEN MOBILE OVERLAY MENU MATCHING REFERENCE DESIGN -->
+        <div class="hidden fixed inset-0 z-[999999] bg-white dark:bg-gray-900 flex-col justify-between p-6 transition-all duration-300"
+            id="mobile-menu-drawer" style="position:fixed; top:0; left:0; right:0; bottom:0; width:100%; height:100vh; z-index:999999;">
+            <!-- Top Bar -->
+            <div class="flex justify-between items-center shrink-0 border-b border-gray-100 dark:border-gray-800" style="padding-bottom: 18px; margin-bottom: 8px;">
+                <a href="{{ url('/') }}" class="flex items-center gap-2.5 app-logo" style="text-decoration:none;">
+                    <img src="{{ asset('img/logo.png') }}" style="height:36px; width:38px; object-fit:contain; border-radius:6px;" alt="ShreeSwarupOS Logo" />
+                    <span style="font-size:18px; font-family:'Montserrat', 'Plus Jakarta Sans', sans-serif; font-weight:900; letter-spacing:0.5px; text-transform:uppercase; line-height:1;">
+                        <span style="color:#00B692; font-weight:900;">SHREESWARUP</span><span style="color:#9CB080; font-weight:900;">OS</span>
+                    </span>
+                </a>
+                <div class="flex items-center gap-2">
+                    <button id="theme-toggle-drawer" type="button" aria-label="Toggle Theme" class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-yellow-400 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                        <svg id="theme-toggle-dark-icon-drawer" class="hidden w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                        </svg>
+                        <svg id="theme-toggle-light-icon-drawer" class="hidden w-5 h-5 text-yellow-400 dark:text-yellow-400" style="color: #facc15 !important;" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                    <button id="close-mobile-menu" type="button" class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-gray-800 text-teal-600 dark:text-teal-400 flex items-center justify-center text-xl font-bold hover:bg-teal-100 dark:hover:bg-gray-700 transition">
+                        ✕
+                    </button>
+                </div>
+            </div>
+
+            <!-- Menu Nav List (Clean dividers + font-medium like reference image) -->
+            <div class="flex-1 overflow-y-auto py-2">
+                <ul class="flex flex-col text-left">
+                    <li class="border-b border-gray-100 dark:border-gray-800/60">
+                        <a href="{{ url('/') }}" class="drawer-nav-link block py-3.5 text-[15px] font-semibold transition">@lang('menu.home')</a>
+                    </li>
+                    <li class="border-b border-gray-100 dark:border-gray-800/60">
+                        <a href="{{ url('/') }}#features" class="drawer-nav-link block py-3.5 text-[15px] font-medium transition">@lang('landing.features')</a>
+                    </li>
+                    <li class="border-b border-gray-100 dark:border-gray-800/60">
+                        <a href="{{ url('/') }}#pricing" class="drawer-nav-link block py-3.5 text-[15px] font-medium transition">@lang('landing.pricing')</a>
+                    </li>
+                    @php
+                        $customMenu = App\Models\CustomMenu::orderBy('sort_order')->get();
+                    @endphp
+                    @foreach ($customMenu as $menu)
+                        @if ($menu->is_active && $menu->position == 'header')
+                            <li class="border-b border-gray-100 dark:border-gray-800/60">
+                                <a href="{{ route('customMenu', ['slug' => $menu->menu_slug]) }}" class="drawer-nav-link block py-3.5 text-[15px] font-medium transition">
+                                    {{ $menu->menu_name }}
+                                </a>
+                            </li>
+                        @endif
+                    @endforeach
+                    <li class="border-b border-gray-100 dark:border-gray-800/60">
+                        <a href="{{ url('/') }}#user-faqs" class="drawer-nav-link block py-3.5 text-[15px] font-medium transition">FAQ</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Bottom Action Buttons (Always visible in Light & Dark mode) -->
+            <div class="pt-4 pb-2 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-3 shrink-0 mt-auto bg-white dark:bg-gray-900">
+                <a href="{{ route('login') }}" wire:navigate class="btn-drawer-login">
+                    @if (user())
+                        @lang('menu.dashboard')
+                    @else
+                        @lang('app.login')
+                    @endif
+                </a>
+                <a href="{{ route('restaurant_signup') }}" wire:navigate class="btn-drawer-signup" style="background-color:#00B692 !important; color:#ffffff !important; font-weight:700 !important; display:block !important; width:100% !important; text-align:center !important; padding:14px 0 !important; border-radius:12px !important; text-transform:uppercase !important; text-decoration:none !important;">
+                    @lang('landing.getStarted')
+                </a>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const toggleBtn = document.getElementById('mobile-menu-toggle');
+                const mobileMenu = document.getElementById('mobile-menu-drawer');
+                const closeBtn = document.getElementById('close-mobile-menu');
+
+                if (toggleBtn && mobileMenu) {
+                    toggleBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        mobileMenu.classList.remove('hidden');
+                        mobileMenu.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                    });
+                }
+
+                if (closeBtn && mobileMenu) {
+                    closeBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        mobileMenu.classList.add('hidden');
+                        mobileMenu.style.display = 'none';
+                        document.body.style.overflow = '';
+                    });
+                }
+
+                if (mobileMenu) {
+                    mobileMenu.querySelectorAll('a').forEach(link => {
+                        link.addEventListener('click', function() {
+                            mobileMenu.classList.add('hidden');
+                            mobileMenu.style.display = 'none';
+                            document.body.style.overflow = '';
+                        });
+                    });
+                }
+
+                const darkIconMobile = document.getElementById('theme-toggle-dark-icon-mobile');
+                const lightIconMobile = document.getElementById('theme-toggle-light-icon-mobile');
+                const btnMobile = document.getElementById('theme-toggle-mobile');
+
+                const darkIconDrawer = document.getElementById('theme-toggle-dark-icon-drawer');
+                const lightIconDrawer = document.getElementById('theme-toggle-light-icon-drawer');
+                const btnDrawer = document.getElementById('theme-toggle-drawer');
+
+                function updateThemeUI() {
+                    const isDark = document.documentElement.classList.contains('dark') || localStorage.getItem('color-theme') === 'dark';
+                    [
+                        { dark: darkIconMobile, light: lightIconMobile },
+                        { dark: darkIconDrawer, light: lightIconDrawer }
+                    ].forEach(pair => {
+                        if (pair.dark && pair.light) {
+                            if (isDark) {
+                                pair.light.classList.remove('hidden');
+                                pair.dark.classList.add('hidden');
+                            } else {
+                                pair.dark.classList.remove('hidden');
+                                pair.light.classList.add('hidden');
+                            }
+                        }
+                    });
+                }
+
+                function toggleTheme() {
+                    if (document.documentElement.classList.contains('dark')) {
+                        document.documentElement.classList.remove('dark');
+                        localStorage.setItem('color-theme', 'light');
+                    } else {
+                        document.documentElement.classList.add('dark');
+                        localStorage.setItem('color-theme', 'dark');
+                    }
+                    updateThemeUI();
+                }
+
+                if (btnMobile) btnMobile.addEventListener('click', toggleTheme);
+                if (btnDrawer) btnDrawer.addEventListener('click', toggleTheme);
+                updateThemeUI();
+            });
+        </script>
 
         <header class="hidden lg:block z-50 sticky top-0 inset-x-0">
             <nav class="bg-white border-gray-200 px-4 lg:px-6 py-2.5 dark:bg-gray-800 sticky top-4 rounded-md mt-2 ">
@@ -263,9 +356,8 @@
                                 class="text-white justify-center bg-skin-base hover:bg-skin-base/[.8] sm:w-auto dark:bg-skin-base dark:hover:bg-skin-base/[0.7] font-semibold rounded-lg text-sm px-5 py-2.5 text-center ltr:ml-2 rtl:mr-2"
                                 wire:click="$dispatch('showSignup')">@lang('landing.getStarted')</a>
                         @endif
-                        <button data-collapse-toggle="mobile-menu-2" type="button"
-                            class="inline-flex items-center p-2 ml-1 text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
-                            aria-controls="mobile-menu-2" aria-expanded="false">
+                        <button id="desktop-menu-toggle" type="button"
+                            class="inline-flex items-center p-2 ml-1 text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
                             <span class="sr-only">@lang('menu.openMainMenu')</span>
                             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
                                 xmlns="http://www.w3.org/2000/svg">
@@ -273,16 +365,10 @@
                                     d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
                                     clip-rule="evenodd"></path>
                             </svg>
-                            <svg class="hidden w-6 h-6" fill="currentColor" viewBox="0 0 20 20"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd"
-                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                    clip-rule="evenodd"></path>
-                            </svg>
                         </button>
                     </div>
                     <div class="hidden justify-between items-center w-full lg:flex lg:w-auto lg:order-1"
-                        id="mobile-menu-2">
+                        id="desktop-menu-2">
                         <ul
                             class="flex flex-col mt-4 font-medium lg:flex-row lg:space-x-8 lg:mt-0 rtl:space-x-reverse">
                             <li>
@@ -333,7 +419,7 @@
             </nav>
         </header>
 
-        <div class="flex mt-4 overflow-hidden dark:bg-gray-900">
+        <div class="flex mt-0 overflow-hidden dark:bg-gray-900">
             <div id="main-content" class="w-full h-full overflow-y-auto dark:bg-gray-900">
                 <main>
                     @yield('content')
@@ -343,7 +429,7 @@
         </div>
     </div>
     @stack('modals')
-    <footer class="p-4 bg-white sm:p-6 dark:bg-gray-800 border-t dark:border-gray-600">
+    <footer class="p-2 bg-white sm:p-3 dark:bg-gray-800 border-t dark:border-gray-600">
         <div class="mx-auto max-w-screen-xl">
             <div class="sm:flex sm:items-center sm:justify-between flex-wrap gap-4">
                 <span class="text-sm text-gray-500 sm:text-center dark:text-gray-400">© {{ now()->year }} <a

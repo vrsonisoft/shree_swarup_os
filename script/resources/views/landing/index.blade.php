@@ -3,15 +3,15 @@
 @section('content')
 
 <section class="bg-white dark:bg-gray-900">
-    <div class="py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-16 lg:px-12">
+    <div class="py-4 px-4 mx-auto max-w-screen-xl text-center lg:py-8 lg:px-12">
 
         <h1
-            class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
+            class="mb-3 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl dark:text-white">
         @lang('landing.heroTitle')</h1>
-        <p class="mb-8 text-lg font-normal text-gray-500 lg:text-xl sm:px-16 xl:px-48 dark:text-gray-400">
+        <p class="mb-4 text-lg font-normal text-gray-500 lg:text-xl sm:px-16 xl:px-48 dark:text-gray-400">
             @lang('landing.heroSubTitle')
         </p>
-        <div class="flex flex-col mb-8 lg:mb-16 space-y-4 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4 rtl:space-x-reverse">
+        <div class="flex flex-col mb-4 lg:mb-6 space-y-4 sm:flex-row sm:justify-center sm:space-y-0 sm:space-x-4 rtl:space-x-reverse">
             <a href="{{ route('restaurant_signup') }}"
                 class="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white rounded-lg bg-skin-base hover:bg-skin-base/[0.7] focus:ring-4 focus:ring-skin-base dark:focus:ring-skin-base">
                 @if($trialPackage)
@@ -61,10 +61,10 @@
 </section>
 
 <!-- Features -->
-<div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto space-y-8">
+<div class="max-w-[85rem] px-4 py-4 sm:px-6 lg:px-8 lg:py-6 mx-auto space-y-4">
 
     <!-- Title -->
-    <div class="mx-auto mb-8 lg:mb-14 text-center">
+    <div class="mx-auto mb-3 lg:mb-5 text-center">
         <h2 class="text-3xl lg:text-4xl text-gray-800 font-bold dark:text-neutral-200">
             @lang('landing.featureSection1')
         </h2>
@@ -157,16 +157,16 @@
 <!-- End Features -->
 
 <!-- Icon Blocks -->
-<div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto" id="icon-features">
+<div class="max-w-[85rem] px-4 py-4 sm:px-6 lg:px-8 lg:py-6 mx-auto" id="icon-features">
 
     <!-- Title -->
-    <div class="mx-auto  mb-8 lg:mb-14 text-center">
+    <div class="mx-auto mb-3 lg:mb-5 text-center">
         <h2 class="text-3xl lg:text-4xl text-gray-800 font-bold dark:text-neutral-200">
             @lang('landing.featureSection2')
         </h2>
     </div>
     <!-- End Title -->
-    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-12">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
         <!-- Icon Block -->
         <div>
@@ -183,7 +183,7 @@
                     <path d="M12 9h2V8h-2z" />
                 </svg>
             </div>
-            <div class="mt-5">
+            <div class="mt-3">
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-white">@lang('landing.iconFeature1')</h3>
                 <p class="mt-1 text-gray-600 dark:text-neutral-400">@lang('landing.iconFeatureDesc1')</p>
             </div>
@@ -200,7 +200,7 @@
                         d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm6.226 5.385c-.584 0-.937.164-.937.593 0 .468.607.674 1.36.93 1.228.415 2.844.963 2.851 2.993C11.5 11.868 9.924 13 7.63 13a7.7 7.7 0 0 1-3.009-.626V9.758c.926.506 2.095.88 3.01.88.617 0 1.058-.165 1.058-.671 0-.518-.658-.755-1.453-1.041C6.026 8.49 4.5 7.94 4.5 6.11 4.5 4.165 5.988 3 8.226 3a7.3 7.3 0 0 1 2.734.505v2.583c-.838-.45-1.896-.703-2.734-.703" />
                 </svg>
             </div>
-            <div class="mt-5">
+            <div class="mt-3">
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-white">@lang('landing.iconFeature2')</h3>
                 <p class="mt-1 text-gray-600 dark:text-neutral-400">@lang('landing.iconFeatureDesc2')</p>
             </div>
@@ -213,11 +213,10 @@
                 class="relative flex justify-center items-center size-12 bg-white rounded-xl before:absolute before:-inset-px before:-z-[1] before:bg-gradient-to-br before:from-gray-700 before:via-transparent before:to-gray-600 before:rounded-xl dark:bg-neutral-900">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                     class="bi bi-qr-code-scan text-skin-base dark:text-skin-base size-6" viewBox="0 0 16 16">
-                    <path
-                        d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1zm-7.978-1L7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002-.014.002zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0M6.936 9.28a6 6 0 0 0-1.23-.247A7 7 0 0 0 5 9c-4 0-5 3-5 4q0 1 1 1h4.216A2.24 2.24 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816M4.92 10A5.5 5.5 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0m3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4" />
+                    <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1zm-7.978-1L7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002-.014.002zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0M6.936 9.28a6 6 0 0 0-1.23-.247A7 7 0 0 0 5 9c-4 0-5 3-5 4q0 1 1 1h4.216A2.24 2.24 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816M4.92 10A5.5 5.5 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0m3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4" />
                 </svg>
             </div>
-            <div class="mt-5">
+            <div class="mt-3">
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-white">@lang('landing.iconFeature3')</h3>
                 <p class="mt-1 text-gray-600 dark:text-neutral-400">@lang('landing.iconFeatureDesc3')</p>
             </div>
@@ -239,7 +238,7 @@
                     </g>
                 </svg>
             </div>
-            <div class="mt-5">
+            <div class="mt-3">
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-white">@lang('landing.iconFeature4')</h3>
                 <p class="mt-1 text-gray-600 dark:text-neutral-400">@lang('landing.iconFeatureDesc4')</p>
             </div>
@@ -256,7 +255,7 @@
                         d="M8.235 1.559a.5.5 0 0 0-.47 0l-7.5 4a.5.5 0 0 0 0 .882L3.188 8 .264 9.559a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882L12.813 8l2.922-1.559a.5.5 0 0 0 0-.882zm3.515 7.008L14.438 10 8 13.433 1.562 10 4.25 8.567l3.515 1.874a.5.5 0 0 0 .47 0zM8 9.433 1.562 6 8 2.567 14.438 6z" />
                 </svg>
             </div>
-            <div class="mt-5">
+            <div class="mt-3">
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-white">@lang('landing.iconFeature5')</h3>
                 <p class="mt-1 text-gray-600 dark:text-neutral-400">@lang('landing.iconFeatureDesc5')</p>
             </div>
@@ -275,7 +274,7 @@
                         d="M2.354.646a.5.5 0 0 0-.801.13l-.5 1A.5.5 0 0 0 1 2v13H.5a.5.5 0 0 0 0 1h15a.5.5 0 0 0 0-1H15V2a.5.5 0 0 0-.053-.224l-.5-1a.5.5 0 0 0-.8-.13L13 1.293l-.646-.647a.5.5 0 0 0-.708 0L11 1.293l-.646-.647a.5.5 0 0 0-.708 0L9 1.293 8.354.646a.5.5 0 0 0-.708 0L7 1.293 6.354.646a.5.5 0 0 0-.708 0L5 1.293 4.354.646a.5.5 0 0 0-.708 0L3 1.293zm-.217 1.198.51.51a.5.5 0 0 0 .707 0L4 1.707l.646.647a.5.5 0 0 0 .708 0L6 1.707l.646.647a.5.5 0 0 0 .708 0L8 1.707l.646.647a.5.5 0 0 0 .708 0L10 1.707l.646.647a.5.5 0 0 0 .708 0L12 1.707l.646.647a.5.5 0 0 0 .708 0l.509-.51.137.274V15H2V2.118z" />
                 </svg>
             </div>
-            <div class="mt-5">
+            <div class="mt-3">
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-white">@lang('landing.iconFeature6')</h3>
                 <p class="mt-1 text-gray-600 dark:text-neutral-400">@lang('landing.iconFeatureDesc6')</p>
             </div>
@@ -293,7 +292,7 @@
                         d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1" />
                 </svg>
             </div>
-            <div class="mt-5">
+            <div class="mt-3">
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-white">@lang('landing.iconFeature7')</h3>
                 <p class="mt-1 text-gray-600 dark:text-neutral-400">@lang('landing.iconFeatureDesc7')</p>
             </div>
@@ -310,7 +309,7 @@
                         d="M0 0h1v15h15v1H0zm10 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V4.9l-3.613 4.417a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61L13.445 4H10.5a.5.5 0 0 1-.5-.5" />
                 </svg>
             </div>
-            <div class="mt-5">
+            <div class="mt-3">
                 <h3 class="text-lg font-semibold text-gray-800 dark:text-white">@lang('landing.iconFeature8')</h3>
                 <p class="mt-1 text-gray-600 dark:text-neutral-400">@lang('landing.iconFeatureDesc8')</p>
             </div>
@@ -322,10 +321,10 @@
 <!-- End Icon Blocks -->
 
 <!-- Testimonials -->
-<div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+<div class="max-w-[85rem] px-4 py-4 sm:px-6 lg:px-8 lg:py-6 mx-auto">
 
     <!-- Title -->
-    <div class="mx-auto  mb-8 lg:mb-14 text-center">
+    <div class="mx-auto mb-3 lg:mb-5 text-center">
         <h2 class="text-3xl lg:text-4xl text-gray-800 font-bold dark:text-neutral-200">
             @lang('landing.testimonialSection1')
         </h2>
@@ -407,13 +406,13 @@
 
 <!-- Features -->
 <div class="overflow-hidden" id="simple-pricing">
-    <div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto">
+    <div class="max-w-[85rem] px-4 py-4 sm:px-6 lg:px-8 lg:py-6 mx-auto">
         <!-- Title -->
-        <div class="mx-auto mb-8 lg:mb-14 text-center">
+        <div class="mx-auto mb-3 lg:mb-5 text-center">
             <h2 class="text-3xl lg:text-4xl text-gray-800 font-bold dark:text-neutral-200">
                 @lang('landing.pricingTitle1')
             </h2>
-            <p class="my-5 font-light text-gray-500 sm:text-xl dark:text-gray-400">
+            <p class="my-3 font-light text-gray-500 sm:text-xl dark:text-gray-400">
                 @lang('landing.pricingSubTitle1')
             </p>
         </div>
@@ -425,9 +424,9 @@
 <!-- End Features -->
 
 <!-- FAQ -->
-<div class="max-w-[85rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14 mx-auto" id="user-faqs">
+<div class="max-w-[85rem] px-4 py-4 sm:px-6 lg:px-8 lg:py-6 mx-auto" id="user-faqs">
     <!-- Title -->
-    <div class="max-w-2xl mx-auto text-center mb-10 lg:mb-14">
+    <div class="max-w-2xl mx-auto text-center mb-5 lg:mb-6">
       <h2 class="text-2xl font-bold md:text-4xl md:leading-tight dark:text-white">@lang('landing.faqTitle1')</h2>
       <p class="mt-1 text-gray-600 dark:text-neutral-400">@lang('landing.faqSubTitle1')</p>
     </div>
@@ -506,8 +505,8 @@
   <!-- End FAQ -->
 
 <!-- Contact -->
-<div class="max-w-7xl px-4 lg:px-8 py-12 lg:py-24 mx-auto">
-    <div class="mb-6 sm:mb-10 max-w-2xl text-center mx-auto">
+<div class="max-w-7xl px-4 lg:px-8 py-6 lg:py-10 mx-auto">
+    <div class="mb-3 sm:mb-5 max-w-2xl text-center mx-auto">
       <h2 class="font-medium text-black text-2xl sm:text-4xl dark:text-white">
         @lang('landing.contactTitle')
       </h2>

@@ -66,16 +66,107 @@
     @includeIf('sections.custom_script_admin')
 </head>
 
-<body>
+<style>
+/* Page Background Transition */
+body {
+    transition: background-color 0.3s ease, color 0.3s ease !important;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+html:not(.dark) body {
+    background-color: #f3f6f5 !important;
+    color: #111827 !important;
+}
+html.dark body {
+    background-color: #071310 !important;
+    color: #f9fafb !important;
+}
+
+/* Theme Toggle Button Styling */
+#theme-toggle {
+    transition: all 0.2s ease !important;
+}
+html:not(.dark) #theme-toggle {
+    background-color: #ffffff !important;
+    border: 1px solid #e5e7eb !important;
+    color: #374151 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+html.dark #theme-toggle {
+    background-color: #142822 !important;
+    border: 1px solid #224538 !important;
+    color: #facc15 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Responsive Logo Header Spacing */
+.logo-text-title {
+    font-size: 22px;
+    font-family: 'Montserrat', 'Plus Jakarta Sans', sans-serif;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    margin-left: 10px;
+}
+.logo-img-head {
+    height: 48px;
+    width: 48px;
+    max-height: 48px;
+    max-width: 48px;
+    object-fit: contain;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+    #theme-toggle {
+        top: 12px !important;
+        right: 12px !important;
+        width: 38px !important;
+        height: 38px !important;
+    }
+    #theme-toggle svg {
+        width: 18px !important;
+        height: 18px !important;
+    }
+    .logo-header-wrapper {
+        margin-top: 12px !important;
+        margin-bottom: 16px !important;
+        padding-left: 8px !important;
+        padding-right: 48px !important;
+    }
+    .logo-text-title {
+        font-size: 16px !important;
+        margin-left: 6px !important;
+    }
+    .logo-img-head {
+        height: 36px !important;
+        width: 36px !important;
+        max-height: 36px !important;
+        max-width: 36px !important;
+    }
+}
+
+/* Logo Text Light/Dark */
+html:not(.dark) .logo-subtext { color: #6b7280 !important; }
+html.dark .logo-subtext { color: #9CB080 !important; }
+</style>
+
+<body class="font-sans antialiased">
     @include('sections.offline-banner')
-    <div class="font-sans text-gray-900 dark:text-gray-100 antialiased">
+    <div class="min-h-screen flex flex-col justify-center items-center px-4 py-6 sm:py-12 relative">
+        <!-- Theme Toggle Button -->
         <button id="theme-toggle" data-tooltip-target="tooltip-toggle" type="button"
-            class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 absolute top-2 right-2">
-            <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
+            class="focus:outline-none rounded-full w-11 h-11 flex items-center justify-center fixed top-5 right-5 sm:top-6 sm:right-6 z-50 cursor-pointer">
+            <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 20 20"
                 xmlns="http://www.w3.org/2000/svg">
                 <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
             </svg>
-            <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
+            <svg id="theme-toggle-light-icon" class="hidden w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"
                 xmlns="http://www.w3.org/2000/svg">
                 <path
                     d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
@@ -88,22 +179,20 @@
             <div class="tooltip-arrow" data-popper-arrow></div>
         </div>
 
-        <div
-            class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100 dark:bg-gray-900">
-            <div class="flex flex-col justify-center items-center space-y-4">
-                <a href="{{ url('/') }}" class="flex items-center gap-3 app-logo" style="display:inline-flex; align-items:center; text-decoration:none;">
-                    <img src="{{ asset('img/logo.png') }}" class="w-[52px] h-[52px] object-contain rounded-md shrink-0 shadow-sm" style="height:52px; width:52px; max-height:52px; max-width:52px; object-fit:contain; border-radius:6px; flex-shrink:0;" alt="ShreeSwarupOS Logo" />
-                    <span class="logo-text" style="font-size:22px; font-family:'Montserrat', 'Plus Jakarta Sans', sans-serif; font-weight:900; letter-spacing:0.5px; text-transform:uppercase; display:inline-flex; align-items:center; line-height:1; margin-left:12px;">
-                        <span style="color:#00B692; font-weight:900;">SHREESWARUP</span><span style="color:#9CB080; font-weight:900;">OS</span>
+        <div class="w-full flex flex-col justify-center items-center">
+            <div class="flex flex-col justify-center items-center mb-6 logo-header-wrapper">
+                <a href="{{ url('/') }}" class="flex items-center gap-2 app-logo" style="display:inline-flex; align-items:center; text-decoration:none;">
+                    <img src="{{ asset('img/logo.png') }}" class="logo-img-head object-contain rounded-xl shrink-0 shadow-sm" alt="ShreeSwarupOS Logo" />
+                    <span class="logo-text-title">
+                        <span style="color:#00B692; font-weight:900;">SHREESWARUP</span><span class="logo-subtext" style="font-weight:900;">OS</span>
                     </span>
                 </a>
             </div>
 
             {{ $slot }}
 
-
             @if (languages()->count() > 1)
-                <div class="mt-4">
+                <div class="mt-6">
                     @livewire('shop.languageSwitcher')
                 </div>
             @endif

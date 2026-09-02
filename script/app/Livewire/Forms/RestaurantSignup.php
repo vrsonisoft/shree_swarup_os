@@ -26,6 +26,7 @@ class RestaurantSignup extends Component
     public $fullName;
     public $email;
     public $password;
+    public $password_confirmation;
     public $branchName;
     public $address;
     public $country;
@@ -218,6 +219,7 @@ class RestaurantSignup extends Component
                 'fullName' => 'required',
                 'email' => 'required|unique:users,email',
                 'password' => 'required',
+                'password_confirmation' => 'required|same:password',
                 'restaurantPhoneCode' => 'required',
                 'restaurantPhoneNumber' => [
                     'required',
