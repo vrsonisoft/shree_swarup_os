@@ -14,15 +14,21 @@ if (sidebar) {
     const toggleSidebarMobileClose = document.getElementById('toggleSidebarMobileClose');
     const toggleSidebarMobileSearch = document.getElementById('toggleSidebarMobileSearch');
 
-    toggleSidebarMobileSearch.addEventListener('click', () => {
-        toggleSidebarMobile(sidebar, sidebarBackdrop, toggleSidebarMobileHamburger, toggleSidebarMobileClose);
-    });
+    if (toggleSidebarMobileSearch && sidebarBackdrop && toggleSidebarMobileHamburger && toggleSidebarMobileClose) {
+        toggleSidebarMobileSearch.addEventListener('click', () => {
+            toggleSidebarMobile(sidebar, sidebarBackdrop, toggleSidebarMobileHamburger, toggleSidebarMobileClose);
+        });
+    }
 
-    toggleSidebarMobileEl.addEventListener('click', () => {
-        toggleSidebarMobile(sidebar, sidebarBackdrop, toggleSidebarMobileHamburger, toggleSidebarMobileClose);
-    });
+    if (toggleSidebarMobileEl && sidebarBackdrop && toggleSidebarMobileHamburger && toggleSidebarMobileClose) {
+        toggleSidebarMobileEl.addEventListener('click', () => {
+            toggleSidebarMobile(sidebar, sidebarBackdrop, toggleSidebarMobileHamburger, toggleSidebarMobileClose);
+        });
+    }
 
-    sidebarBackdrop.addEventListener('click', () => {
-        toggleSidebarMobile(sidebar, sidebarBackdrop, toggleSidebarMobileHamburger, toggleSidebarMobileClose);
-    });
+    if (sidebarBackdrop && toggleSidebarMobileHamburger && toggleSidebarMobileClose) {
+        sidebarBackdrop.addEventListener('click', () => {
+            toggleSidebarMobile(sidebar, sidebarBackdrop, toggleSidebarMobileHamburger, toggleSidebarMobileClose);
+        });
+    }
 }
