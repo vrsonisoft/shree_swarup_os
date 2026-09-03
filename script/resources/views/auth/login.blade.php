@@ -223,16 +223,13 @@
                 });
             }
 
+            const form = document.querySelector('form');
             const button = document.querySelector('.button');
-            if (button) {
-                button.addEventListener('click', function() {
-                    const emailField = document.getElementById('email');
-                    const passwordField = document.getElementById('password');
-                    if (emailField && passwordField && emailField.checkValidity() && passwordField.checkValidity() && emailField.value && passwordField.value) {
-                        button.classList.add('opacity-75', 'cursor-not-allowed');
-                        const spinner = button.querySelector('svg');
-                        if (spinner) spinner.classList.remove('hidden');
-                    }
+            if (form && button) {
+                form.addEventListener('submit', function() {
+                    button.classList.add('opacity-75', 'cursor-not-allowed');
+                    const spinner = button.querySelector('svg');
+                    if (spinner) spinner.classList.remove('hidden');
                 });
             }
         });

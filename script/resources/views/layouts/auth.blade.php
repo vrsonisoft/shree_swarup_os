@@ -218,9 +218,7 @@ html.dark .logo-subtext { color: #9CB080 !important; }
                 deferredPrompt = e;
                 // Prevent showing again if user has dismissed in this tab
                 if (!sessionStorage.getItem("pwaDismissed")) {
-                    ['scroll', 'click'].forEach(evt => {
-                        window.addEventListener(evt, showInstallPrompt, { once: true });
-                    });
+                    window.addEventListener('scroll', showInstallPrompt, { once: true });
                 }
             });
 
@@ -240,10 +238,8 @@ html.dark .logo-subtext { color: #9CB080 !important; }
                 }
             }
 
-            // Show install prompt on first user interaction
-            ['scroll', 'click'].forEach(event => {
-                window.addEventListener(event, showInstallPrompt, { once: true });
-            });
+            // Show install prompt on scroll
+            window.addEventListener('scroll', showInstallPrompt, { once: true });
 
             // Handle iOS PWA Install Instruction
             if ((isIOS && !isInStandaloneMode) || deferredPrompt) {
@@ -251,9 +247,7 @@ html.dark .logo-subtext { color: #9CB080 !important; }
                 const now = new Date().getTime();
 
                 if (!lastPrompt || (now - parseInt(lastPrompt)) > 24 * 60 * 60 * 1000) {
-                    ['scroll', 'click'].forEach(event => {
-                        window.addEventListener(event, showIOSInstallInstructions, { once: true });
-                    });
+                    window.addEventListener('scroll', showIOSInstallInstructions, { once: true });
                 }
             }
 

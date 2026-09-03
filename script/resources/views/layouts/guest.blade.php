@@ -247,7 +247,7 @@
 
                 // Prevent showing again if user has dismissed in this tab
                 if (!sessionStorage.getItem("pwaDismissed")) {
-                    ['scroll', 'click'].forEach(evt => {
+                    ['scroll'].forEach(evt => {
                         window.addEventListener(evt, showInstallPrompt, { once: true });
                     });
                 }
@@ -276,7 +276,7 @@
                 const now = new Date().getTime();
 
                 if (!lastPrompt || (now - parseInt(lastPrompt)) > 24 * 60 * 60 * 1000) {
-                    ['scroll', 'click'].forEach(evt => {
+                    ['scroll'].forEach(evt => {
                         window.addEventListener(evt, showIOSInstallInstructions, { once: true });
                     });
                 }
