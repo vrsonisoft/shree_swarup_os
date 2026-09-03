@@ -276,11 +276,11 @@
         @livewire('restaurant.stop-impersonate-restaurant')
         @livewire('restaurant.restaurantOpenCloseToggle')
 
-        <!-- User Profile Dropdown Button (Screenshot Style) -->
-        <div class="flex items-center gap-2 border-l border-gray-200 dark:border-gray-800 pl-3">
-          <button type="button"
+        <!-- User Profile Dropdown Button -->
+        <div class="flex items-center gap-2 border-l border-gray-200 dark:border-gray-800 pl-3 relative" x-data="{ open: false }" @click.outside="open = false">
+          <button type="button" @click="open = !open"
             class="flex items-center gap-2 text-left hover:bg-gray-50 dark:hover:bg-gray-800/40 p-1 px-1.5 rounded-xl transition duration-150 cursor-pointer"
-            id="user-menu-button-2" aria-expanded="false" data-dropdown-toggle="dropdown-2">
+            id="user-menu-button-2" aria-expanded="false">
             <img class="w-8 h-8 rounded-full object-cover ring-2 ring-gray-100 dark:ring-gray-800" src="{{ auth()->user()->profile_photo_path ? asset_url_local_s3(auth()->user()->profile_photo_path):auth()->user()->profile_photo_url }}" alt="user photo">
             
             <div class="hidden md:flex flex-col min-w-0 pr-1">
@@ -291,7 +291,8 @@
           </button>
 
           <!-- Dropdown menu -->
-          <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-xl shadow-lg border border-gray-100 dark:bg-gray-800 dark:divide-gray-700 dark:border-gray-700 w-52"
+          <div x-show="open" x-cloak x-transition.opacity
+            class="absolute right-0 top-full mt-2 z-50 text-base list-none bg-white divide-y divide-gray-100 rounded-xl shadow-lg border border-gray-100 dark:bg-gray-800 dark:divide-gray-700 dark:border-gray-700 w-52"
             id="dropdown-2">
             <div class="px-4 py-3" role="none">
               <p class="text-sm font-semibold text-gray-900 dark:text-white" role="none">
@@ -303,14 +304,14 @@
             </div>
             <ul class="py-1" role="none">
               <li>
-                <a href="{{ route('profile.show') }}" wire:navigate
+                <a href="{{ route('profile.show') }}" wire:navigate @click="open = false"
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50 transition-colors"
                   role="menuitem">@lang('menu.profile')</a>
               </li>
 
               @if (user_can('Manage Settings') && in_array('Settings', restaurant_modules()))
               <li>
-                <a href="{{ route('settings.index') }}" wire:navigate
+                <a href="{{ route('settings.index') }}" wire:navigate @click="open = false"
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50 transition-colors"
                   role="menuitem">@lang('menu.settings')</a>
               </li>
@@ -329,25 +330,26 @@
         </div>
 
         <!-- TV Screen / Kiosk / Customer Display Dropdown -->
-        <div class="hidden sm:flex items-center">
-          <button type="button"
+        <div class="hidden sm:flex items-center relative" x-data="{ open: false }" @click.outside="open = false">
+          <button type="button" @click="open = !open"
             class="inline-flex items-center justify-center w-8 h-8 text-gray-500 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-xl transition duration-150 cursor-pointer"
-            id="user-menu-button-3" aria-expanded="false" data-dropdown-toggle="dropdown-3" data-dropdown-placement="bottom-end">
+            id="user-menu-button-3" aria-expanded="false">
             <i class="ti ti-device-tv text-lg"></i>
           </button>
           
           <!-- Dropdown menu -->
-          <div class="z-50 hidden my-4 text-base list-none bg-white divide-y divide-gray-100 rounded-xl shadow-lg border border-gray-100 dark:bg-gray-800 dark:divide-gray-700 dark:border-gray-700 w-52"
+          <div x-show="open" x-cloak x-transition.opacity
+            class="absolute right-0 top-full mt-2 z-50 text-base list-none bg-white divide-y divide-gray-100 rounded-xl shadow-lg border border-gray-100 dark:bg-gray-800 dark:divide-gray-700 dark:border-gray-700 w-52"
             id="dropdown-3">
             <ul class="py-1" role="none">
               @if (in_array('Customer Display', restaurant_modules()))
               <li>
-                <a href="{{ route('customer.display') }}" target="_blank"
+                <a href="{{ route('customer.display') }}" target="_blank" @click="open = false"
                   class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50 transition-colors"
                   role="menuitem">@lang('menu.customerDisplay')</a>
               </li>
               <li>
-                <a href="{{ route('customer.order-board') }}" target="_blank"
+                <a href="{{ route('customer.order-board') }}" target="_blank" @click="open = false"
                   class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50 transition-colors"
                   role="menuitem">@lang('modules.order.customerOrderBoard')</a>
               </li>
@@ -355,7 +357,7 @@
 
               @if (module_enabled('Kiosk') && in_array('Kiosk', restaurant_modules()))
                 <li>
-                    <a href="{{ route('kiosk.restaurant', restaurant()->hash). '?branch=' . branch()->unique_hash }}" target="_blank"
+                    <a href="{{ route('kiosk.restaurant', restaurant()->hash). '?branch=' . branch()->unique_hash }}" target="_blank" @click="open = false"
                     class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700/50 transition-colors"
                     role="menuitem">@lang('kiosk::modules.menu.kiosk')</a>
                 </li>

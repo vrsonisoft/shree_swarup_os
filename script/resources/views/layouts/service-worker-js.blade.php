@@ -45,15 +45,13 @@
         }
 
         if (isIOS && !isInStandaloneMode) {
-            // Show instruction only once, on scroll or click
+            // Show instruction only once on scroll
             const showInstructionsOnce = () => {
                 showIOSInstallInstructions();
                 window.removeEventListener('scroll', showInstructionsOnce);
-                window.removeEventListener('click', showInstructionsOnce);
             };
 
             window.addEventListener('scroll', showInstructionsOnce, { once: true });
-            window.addEventListener('click', showInstructionsOnce, { once: true });
         }
         // ---------------------- Function to Show iOS Instructions ----------------------
 
