@@ -17,123 +17,190 @@ class PackageSeeder extends Seeder
      */
     public function run(): void
     {
+        // Fetch INR currency ID (fallback to first available currency)
+        $currency = GlobalCurrency::where('currency_code', 'INR')->first() ?? GlobalCurrency::first();
+        $currencyID = $currency ? $currency->id : 1;
 
-        // Fetch the currency ID
-        $currencyID = GlobalCurrency::first()->id;
         $modules = Module::withoutGlobalScope(ModuleScope::class)
-        ->where('is_superadmin', 0)->get();
+            ->where('is_superadmin', 0)
+            ->get();
+        $moduleIds = $modules->pluck('id')->toArray();
 
-        // Create the Default package
-        $package = new Package();
-        $package->package_name = 'Default';
-        $package->description = 'Its a default package and cannot be deleted';
-        $package->currency_id = $currencyID;
-        $package->monthly_status = 0;
-        $package->annual_status = 0;
-        $package->annual_price = null;
-        $package->monthly_price = null;
-        $package->price = 0;
-        $package->is_free = 1;
-        $package->billing_cycle = 12;
-        $package->sort_order = 1;
-        $package->is_private = 0;
-        $package->is_recommended = 0;
-        $package->package_type = PackageType::DEFAULT;
-        $package->save();
+        // 1. Create / Update the Default package
+        $defaultPackage = Package::updateOrCreate(
+            ['id' => 1],
+            [
+                'package_name'     => 'Default',
+                'description'      => 'System default package and cannot be deleted.',
+                'currency_id'      => $currencyID,
+                'monthly_status'   => 0,
+                'annual_status'    => 0,
+                'annual_price'     => null,
+                'monthly_price'    => null,
+                'price'            => 0,
+                'is_free'          => 1,
+                'billing_cycle'    => 12,
+                'sort_order'       => 1,
+                'is_private'       => 1,
+                'is_recommended'   => 0,
+                'package_type'     => PackageType::DEFAULT,
+            ]
+        );
+        $defaultPackage->modules()->sync($moduleIds);
 
-        // Assign all modules to the default package
-        $package->modules()->sync($modules->pluck('id')->toArray());
+        // 2. Create / Update the Starter package (₹499 / mo, ₹4,999 / yr)
+        $starterPackage = Package::updateOrCreate(
+            ['id' => 2],
+            [
+                'package_name'        => 'Starter',
+                'description'         => 'Ideal for small cafes, bakeries, food trucks, and quick-service counters.',
+                'currency_id'         => $currencyID,
+                'monthly_status'      => 1,
+                'annual_status'       => 1,
+                'annual_price'        => 4999.00,
+                'monthly_price'       => 499.00,
+                'price'               => 499.00,
+                'is_free'             => 0,
+                'billing_cycle'       => 12,
+                'sort_order'          => 1,
+                'is_private'          => 0,
+                'is_recommended'      => 0,
+                'package_type'        => PackageType::STANDARD,
+                'branch_limit'        => 1,
+                'multipos_limit'      => 1,
+                'menu_items_limit'    => -1,
+                'order_limit'         => -1,
+                'staff_limit'         => 2,
+                'additional_features' => json_encode([
+                    '1 Restaurant Branch',
+                    '1 POS Billing Counter',
+                    'QR Code Digital Menu',
+                    'Takeaway & Delivery Orders',
+                    'Thermal Slip Printing',
+                    'Daily Sales & Revenue Reports',
+                    '2 Staff User Accounts',
+                    'Standard Email/Chat Support',
+                ]),
+            ]
+        );
+        $starterPackage->modules()->sync($moduleIds);
 
-        // Create a Subscription package
-        $subscriptionPackage = new Package();
-        $subscriptionPackage->package_name = 'Subscription Package';
-        $subscriptionPackage->description = 'This is a subscription package';
-        $subscriptionPackage->currency_id = $currencyID;
-        $subscriptionPackage->monthly_status = 1;
-        $subscriptionPackage->annual_status = 1;
-        $subscriptionPackage->annual_price = 100;
-        $subscriptionPackage->monthly_price = 10;
-        $subscriptionPackage->price = 0;
-        $subscriptionPackage->is_free = 0;
-        $subscriptionPackage->billing_cycle = 10;
-        $subscriptionPackage->sort_order = 2;
-        $subscriptionPackage->is_private = 0;
-        $subscriptionPackage->is_recommended = 1;
-        $subscriptionPackage->package_type = PackageType::STANDARD;
-        $subscriptionPackage->save();
+        // 3. Create / Update the Pro package (₹999 / mo, ₹8,999 / yr - ⭐ Most Popular)
+        $proPackage = Package::updateOrCreate(
+            ['id' => 3],
+            [
+                'package_name'        => 'Pro',
+                'description'         => 'Complete Restaurant OS for dine-in restaurants, cafes, bars, and lounges.',
+                'currency_id'         => $currencyID,
+                'monthly_status'      => 1,
+                'annual_status'       => 1,
+                'annual_price'        => 8999.00,
+                'monthly_price'       => 999.00,
+                'price'               => 999.00,
+                'is_free'             => 0,
+                'billing_cycle'       => 10,
+                'sort_order'          => 2,
+                'is_private'          => 0,
+                'is_recommended'      => 1,
+                'package_type'        => PackageType::STANDARD,
+                'branch_limit'        => 1,
+                'multipos_limit'      => 3,
+                'menu_items_limit'    => -1,
+                'order_limit'         => -1,
+                'staff_limit'         => 10,
+                'additional_features' => json_encode([
+                    'Everything in Starter, plus:',
+                    'Live Table & Floor Layout Management',
+                    'Contactless QR Table Ordering',
+                    'Kitchen Order Tickets (KOT) & KDS',
+                    'ShreeSwarupOS Thermal Printer App',
+                    'Up to 3 POS Billing Counters',
+                    'Waiter Call & Staff Assignment',
+                    'Expense & Cash Register Tracking',
+                    'Customer CRM & Order History',
+                    '10 Staff Accounts (Waiter, Chef, Cashier)',
+                    'Priority Phone & WhatsApp Support',
+                ]),
+            ]
+        );
+        $proPackage->modules()->sync($moduleIds);
 
-        // Assign all modules to the subscription package
-        $subscriptionPackage->modules()->sync($modules->pluck('id')->toArray());
+        // 4. Create / Update the Enterprise package (₹1,999 / mo, ₹17,999 / yr)
+        $enterprisePackage = Package::updateOrCreate(
+            ['id' => 4],
+            [
+                'package_name'        => 'Enterprise',
+                'description'         => 'Built for multi-outlet restaurant chains, franchises, and large food establishments.',
+                'currency_id'         => $currencyID,
+                'monthly_status'      => 1,
+                'annual_status'       => 1,
+                'annual_price'        => 17999.00,
+                'monthly_price'       => 1999.00,
+                'price'               => 1999.00,
+                'is_free'             => 0,
+                'billing_cycle'       => 12,
+                'sort_order'          => 3,
+                'is_private'          => 0,
+                'is_recommended'      => 0,
+                'package_type'        => PackageType::STANDARD,
+                'branch_limit'        => 3,
+                'multipos_limit'      => -1,
+                'menu_items_limit'    => -1,
+                'order_limit'         => -1,
+                'staff_limit'         => -1,
+                'additional_features' => json_encode([
+                    'Everything in Pro, plus:',
+                    'Multi-Branch Centralized Management (3 Outlets)',
+                    'Unlimited POS Terminals & Counters',
+                    'Multi-Kitchen KOT Routing',
+                    'Advanced Table Reservations & Booking',
+                    'Unlimited Staff & Custom Roles',
+                    'Consolidated Multi-Outlet Analytics',
+                    'Custom Brand Logo on QR & Receipts',
+                    'Dedicated 24/7 Account Manager & SLA',
+                ]),
+            ]
+        );
+        $enterprisePackage->modules()->sync($moduleIds);
 
-        // Create a Lifetime package
-        $lifetimePackage = new Package();
-        $lifetimePackage->package_name = 'Life Time';
-        $lifetimePackage->description = 'This is a lifetime access package';
-        $lifetimePackage->currency_id = $currencyID;
-        $lifetimePackage->monthly_status = 0;
-        $lifetimePackage->annual_status = 0;
-        $lifetimePackage->annual_price = null;
-        $lifetimePackage->monthly_price = null;
-        $lifetimePackage->price = 199;
-        $lifetimePackage->is_free = 0;
-        $lifetimePackage->billing_cycle = 0;
-        $lifetimePackage->sort_order = 3;
-        $lifetimePackage->is_private = 0;
-        $lifetimePackage->is_recommended = 1;
-        $lifetimePackage->additional_features = json_encode(Package::ADDITIONAL_FEATURES);
-        $lifetimePackage->package_type = PackageType::LIFETIME;
-        $lifetimePackage->save();
-
-        // Assign all modules to the lifetime package
-        $lifetimePackage->modules()->sync($modules->pluck('id')->toArray());
-
-        // Create a Private package
-        $privatePackage = new Package();
-        $privatePackage->package_name = 'Private Package';
-        $privatePackage->description = 'This is a private package';
-        $privatePackage->price = 0;
-        $privatePackage->currency_id = $currencyID;
-        $privatePackage->monthly_status = 1;
-        $privatePackage->annual_status = 1;
-        $privatePackage->annual_price = 50;
-        $privatePackage->monthly_price = 5;
-        $privatePackage->is_free = 0;
-        $privatePackage->billing_cycle = 12;
-        $privatePackage->sort_order = 4;
-        $privatePackage->is_private = 1;
-        $privatePackage->is_recommended = 0;
-        $privatePackage->package_type = PackageType::STANDARD;
-        $privatePackage->save();
-
-        // Assign all modules to the private package
-        $privatePackage->modules()->sync($modules->pluck('id')->toArray());
-
-
-        // Create a Trial package
-        $trialPackage = new Package();
-        $trialPackage->package_name = 'Trial Package';
-        $trialPackage->description = 'This is a trial package';
-        $trialPackage->currency_id = $currencyID;
-        $trialPackage->monthly_status = 0;
-        $trialPackage->annual_status = 0;
-        $trialPackage->annual_price = null;
-        $trialPackage->monthly_price = null;
-        $trialPackage->price = 0;
-        $trialPackage->is_free = 1;
-        $trialPackage->billing_cycle = 0;
-        $trialPackage->sort_order = null;
-        $trialPackage->is_private = 0;
-        $trialPackage->is_recommended = 0;
-        $trialPackage->package_type = PackageType::TRIAL;
-        $trialPackage->additional_features = json_encode(Package::ADDITIONAL_FEATURES);
-        $trialPackage->trial_days = 30;
-        $trialPackage->trial_status = 1;
-        $trialPackage->trial_notification_before_days = 5;
-        $trialPackage->trial_message = '30 Days Free Trial';
-        $trialPackage->save();
-
-        // Assign all modules to the trial package
-        $trialPackage->modules()->sync($modules->pluck('id')->toArray());
+        // 5. Create / Update the 14-Day Trial package
+        $trialPackage = Package::updateOrCreate(
+            ['id' => 5],
+            [
+                'package_name'                  => 'Trial Package',
+                'description'                   => '14 Days full-featured free trial to experience the power of ShreeSwarupOS.',
+                'currency_id'                   => $currencyID,
+                'monthly_status'                => 0,
+                'annual_status'                 => 0,
+                'annual_price'                  => null,
+                'monthly_price'                 => null,
+                'price'                         => 0,
+                'is_free'                       => 1,
+                'billing_cycle'                 => 0,
+                'sort_order'                    => null,
+                'is_private'                    => 0,
+                'is_recommended'                => 0,
+                'package_type'                  => PackageType::TRIAL,
+                'trial_days'                    => 14,
+                'trial_status'                  => 1,
+                'trial_notification_before_days'=> 3,
+                'trial_message'                 => '14 Days Free Trial',
+                'branch_limit'                  => 1,
+                'multipos_limit'                => 3,
+                'staff_limit'                   => 10,
+                'menu_items_limit'              => -1,
+                'order_limit'                   => -1,
+                'additional_features'           => json_encode([
+                    '14-Day Full Access to Pro Features',
+                    'QR Code Menu & Table Ordering',
+                    'Kitchen Order Tickets (KOT)',
+                    'ShreeSwarupOS Thermal Printer App',
+                    'Up to 3 POS Billing Counters',
+                    '10 Staff Accounts',
+                ]),
+            ]
+        );
+        $trialPackage->modules()->sync($moduleIds);
     }
 
 }
