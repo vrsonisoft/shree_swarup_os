@@ -145,9 +145,9 @@
             <nav class="bg-white border-gray-200 px-3 py-2.5 dark:bg-gray-800 dark:text-gray">
                 <div class="flex flex-nowrap justify-between items-center w-full mx-auto">
                     <a href="{{ url('/') }}" class="flex items-center gap-2 app-logo min-w-0 shrink" style="display:inline-flex; align-items:center; text-decoration:none;">
-                        <img src="{{ asset('img/logo.png') }}" class="w-[40px] h-[40px] object-contain rounded-md shrink-0" style="height:40px; width:40px; max-height:40px; max-width:40px; object-fit:contain; border-radius:6px; flex-shrink:0;" alt="ShreeSwarupOS Logo" />
+                        <img src="{{ asset('img/logo.png') }}" class="w-[40px] h-[40px] object-contain rounded-md shrink-0" style="height:40px; width:40px; max-height:40px; max-width:40px; object-fit:contain; border-radius:6px; flex-shrink:0;" alt="ChowChak Logo" />
                         <span class="logo-text shrink min-w-0 overflow-hidden text-ellipsis" style="font-size:clamp(14px, 4.5vw, 18px); font-family:'Montserrat', 'Plus Jakarta Sans', sans-serif; font-weight:900; letter-spacing:0.5px; text-transform:uppercase; display:inline-flex; align-items:center; line-height:1; margin-left:6px; white-space:nowrap;">
-                            <span style="color:#00B692; font-weight:900;">SHREESWARUP</span><span style="color:#9CB080; font-weight:900;">OS</span>
+                            <span style="color:#00B692; font-weight:900;">CHOW</span><span style="color:#9CB080; font-weight:900;">CHAK</span>
                         </span>
                     </a>
                     <div class="flex flex-shrink-0 items-center gap-2">
@@ -177,9 +177,9 @@
             <!-- Top Bar -->
             <div class="flex justify-between items-center shrink-0 border-b border-gray-100 dark:border-gray-800" style="padding-bottom: 18px; margin-bottom: 8px;">
                 <a href="{{ url('/') }}" class="flex items-center gap-2.5 app-logo" style="text-decoration:none;">
-                    <img src="{{ asset('img/logo.png') }}" style="height:36px; width:38px; object-fit:contain; border-radius:6px;" alt="ShreeSwarupOS Logo" />
+                    <img src="{{ asset('img/logo.png') }}" style="height:36px; width:38px; object-fit:contain; border-radius:6px;" alt="ChowChak Logo" />
                     <span style="font-size:18px; font-family:'Montserrat', 'Plus Jakarta Sans', sans-serif; font-weight:900; letter-spacing:0.5px; text-transform:uppercase; line-height:1;">
-                        <span style="color:#00B692; font-weight:900;">SHREESWARUP</span><span style="color:#9CB080; font-weight:900;">OS</span>
+                        <span style="color:#00B692; font-weight:900;">CHOW</span><span style="color:#9CB080; font-weight:900;">CHAK</span>
                     </span>
                 </a>
                 <div class="flex items-center gap-2">
@@ -324,9 +324,9 @@
             <nav class="bg-white border-gray-200 px-4 lg:px-6 py-2.5 dark:bg-gray-800 sticky top-4 rounded-md mt-2 ">
                 <div class="flex flex-wrap justify-between items-center mx-auto max-w-screen-xl">
                     <a href="{{ url('/') }}" class="flex items-center gap-3 app-logo" style="display:inline-flex; align-items:center; text-decoration:none;">
-                        <img src="{{ asset('img/logo.png') }}" class="w-[52px] h-[52px] object-contain rounded-md shrink-0 shadow-sm" style="height:52px; width:52px; max-height:52px; max-width:52px; object-fit:contain; border-radius:6px; flex-shrink:0;" alt="ShreeSwarupOS Logo" />
+                        <img src="{{ asset('img/logo.png') }}" class="w-[52px] h-[52px] object-contain rounded-md shrink-0 shadow-sm" style="height:52px; width:52px; max-height:52px; max-width:52px; object-fit:contain; border-radius:6px; flex-shrink:0;" alt="ChowChak Logo" />
                         <span class="logo-text" style="font-size:22px; font-family:'Montserrat', 'Plus Jakarta Sans', sans-serif; font-weight:900; letter-spacing:0.5px; text-transform:uppercase; display:inline-flex; align-items:center; line-height:1; margin-left:12px;">
-                            <span style="color:#00B692; font-weight:900;">SHREESWARUP</span><span style="color:#9CB080; font-weight:900;">OS</span>
+                            <span style="color:#00B692; font-weight:900;">CHOW</span><span style="color:#9CB080; font-weight:900;">CHAK</span>
                         </span>
                     </a>
                     <div class="flex items-center lg:order-2">

@@ -21,7 +21,7 @@
           <a href="{{ route('superadmin.dashboard') }}" class="flex ltr:ml-2 rtl:mr-24 items-center app-logo" style="display:inline-flex; align-items:center; text-decoration:none;">
             <x-global-logo :setting="restaurantOrGlobalSetting()" class="h-8 ltr:mr-2.5 rtl:ml-2.5" />
             <span class="logo-text self-center text-lg font-black uppercase tracking-wider hidden lg:inline-flex nav-brand-text" style="font-family:'Montserrat', sans-serif; line-height:1;">
-                <span style="color:#00B692; font-weight:900;">SHREESWARUP</span><span style="color:#9CB080; font-weight:900;">OS</span>
+                <span style="color:#00B692; font-weight:900;">CHOW</span><span style="color:#9CB080; font-weight:900;">CHAK</span>
             </span>
           </a>
 

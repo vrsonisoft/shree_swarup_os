@@ -183,7 +183,7 @@
             <div style="text-align: center; margin-top: 12px; display: flex; flex-direction: column; gap: 10px;">
                 @if(!module_enabled('Subdomain'))
                 <div class="auth-subtitle" style="font-size: 14px; font-weight: 500;">
-                    New to ShreeSwarupOS? 
+                    New to ChowChak? 
                     <a href="{{ route('restaurant_signup') }}" style="color: #00b692; font-weight: 700; text-decoration: none; margin-left: 4px;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
                         Create an account
                     </a>

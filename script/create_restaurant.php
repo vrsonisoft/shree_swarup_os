@@ -15,7 +15,7 @@ try {
     $package = Package::first();
 
     $restaurant = new Restaurant();
-    $restaurant->name = 'ShreeSwarup Restaurant';
+    $restaurant->name = 'ChowChak Restaurant';
     $restaurant->hash = md5(microtime());
     $restaurant->address = 'Jodhpur, Rajasthan';
     $restaurant->email = 'restaurant@example.com';

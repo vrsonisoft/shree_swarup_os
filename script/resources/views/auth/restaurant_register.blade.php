@@ -148,7 +148,7 @@
                 Create an account
             </h2>
             <p class="auth-subtitle" style="font-size: 14px; font-weight: 500; margin: 0;">
-                Get started with ShreeSwarupOS today.
+                Get started with ChowChak today.
             </p>
         </div>
 

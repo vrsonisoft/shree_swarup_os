@@ -182,9 +182,9 @@ html.dark .logo-subtext { color: #9CB080 !important; }
         <div class="w-full flex flex-col justify-center items-center">
             <div class="flex flex-col justify-center items-center mb-6 logo-header-wrapper">
                 <a href="{{ url('/') }}" class="flex items-center gap-2 app-logo" style="display:inline-flex; align-items:center; text-decoration:none;">
-                    <img src="{{ asset('img/logo.png') }}" class="logo-img-head object-contain rounded-xl shrink-0 shadow-sm" alt="ShreeSwarupOS Logo" />
+                    <img src="{{ asset('img/logo.png') }}" class="logo-img-head object-contain rounded-xl shrink-0 shadow-sm" alt="ChowChak Logo" />
                     <span class="logo-text-title">
-                        <span style="color:#00B692; font-weight:900;">SHREESWARUP</span><span class="logo-subtext" style="font-weight:900;">OS</span>
+                        <span style="color:#00B692; font-weight:900;">CHOW</span><span class="logo-subtext" style="font-weight:900;">CHAK</span>
                     </span>
                 </a>
             </div>
