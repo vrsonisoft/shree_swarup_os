@@ -490,7 +490,7 @@
                         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             Walkthrough Video Title <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" x-model="video.walkthrough_title" placeholder="e.g. TableTrack Complete Platform Walkthrough & Feature Demo" class="hp-input font-bold">
+                        <input type="text" x-model="video.walkthrough_title" placeholder="e.g. ChowChak Complete Platform Walkthrough & Feature Demo" class="hp-input font-bold">
                     </div>
 
                     <div>
