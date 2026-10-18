@@ -16,8 +16,8 @@ class GlobalSettingSeeder extends Seeder
      */
     public function run(): void
     {
-        $setting = new GlobalSetting();
-        $setting->name = 'TableTrack';
+        $setting = GlobalSetting::first() ?: new GlobalSetting();
+        $setting->name = 'ChowChak';
         $setting->theme_hex = '#00b692';
         $setting->theme_rgb = '0, 182, 146';
         $setting->hash = md5(microtime());

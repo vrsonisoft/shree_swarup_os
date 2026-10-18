@@ -367,8 +367,8 @@ class PublicApiController extends Controller
                 $faqs = [
                     [
                         'id' => 1,
-                        'question' => 'How does TableTrack Digital QR Menu work?',
-                        'answer' => 'TableTrack allows restaurant customers to scan a QR code placed on their table using their smartphone camera, view the digital interactive menu, customize their order, and place orders directly without waiting for a waiter.'
+                        'question' => 'How does ChowChak Digital QR Menu work?',
+                        'answer' => 'ChowChak allows restaurant customers to scan a QR code placed on their table using their smartphone camera, view the digital interactive menu, customize their order, and place orders directly without waiting for a waiter.'
                     ],
                     [
                         'id' => 2,
@@ -377,8 +377,8 @@ class PublicApiController extends Controller
                     ],
                     [
                         'id' => 3,
-                        'question' => 'Does TableTrack support POS & Kitchen Order Tickets (KOT)?',
-                        'answer' => 'Yes, TableTrack includes a complete POS billing interface and automated KOT management. Orders placed by customers or staff automatically print or display on kitchen screens.'
+                        'question' => 'Does ChowChak support POS & Kitchen Order Tickets (KOT)?',
+                        'answer' => 'Yes, ChowChak includes a complete POS billing interface and automated KOT management. Orders placed by customers or staff automatically print or display on kitchen screens.'
                     ]
                 ];
             }
