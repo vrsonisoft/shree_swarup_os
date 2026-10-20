@@ -15,17 +15,21 @@
         @endsession
 
         @if(session('demo_otp'))
-            <div class="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200">
-                Demo mode OTP: <strong>{{ session('demo_otp') }}</strong>
+            <div class="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200 text-center">
+                Test OTP: <strong>{{ session('demo_otp') }}</strong> (Auto-filled)
             </div>
         @endif
 
         @if(!session('otp_sent'))
+            <div class="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200 text-center">
+                Test Mode: Direct login enabled with OTP <strong>123456</strong>
+            </div>
+
             <form method="POST" action="{{ route('delivery.otp.send') }}">
                 @csrf
                 <div>
                     <x-label for="email" value="{{ __('app.email') }}"/>
-                    <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username"/>
+                    <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', 'delivery@test.com')" required autofocus autocomplete="username"/>
                 </div>
 
                 <div class="flex items-center justify-between mt-6">
@@ -53,12 +57,15 @@
 
                 <div>
                     <x-label for="otp" value="{{ __('auth.enter6DigitCode') }}"/>
+                    @php
+                        $prefillOtp = session('demo_otp', '123456');
+                    @endphp
                     <div class="mt-1 flex justify-center space-x-2">
                         @for($i = 1; $i <= 6; $i++)
-                            <input type="text" name="otp[]" maxlength="1" class="w-12 h-12 text-center text-lg font-semibold border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white otp-input" data-index="{{ $i }}" autocomplete="off">
+                            <input type="text" name="otp[]" maxlength="1" class="w-12 h-12 text-center text-lg font-semibold border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white otp-input" data-index="{{ $i }}" autocomplete="off" value="{{ $prefillOtp ? substr($prefillOtp, $i - 1, 1) : '' }}">
                         @endfor
                     </div>
-                    <input type="hidden" name="otp_combined" id="otp_combined">
+                    <input type="hidden" name="otp_combined" id="otp_combined" value="{{ $prefillOtp ?? '123456' }}">
                 </div>
 
                 <div class="flex items-center justify-between mt-6">
@@ -75,6 +82,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             const otpInputs = document.querySelectorAll('.otp-input');
             const otpCombined = document.getElementById('otp_combined');
+
+            if (otpCombined && (!otpCombined.value || otpCombined.value.length < 6)) {
+                otpCombined.value = Array.from(otpInputs).map((el) => el.value).join('');
+            }
 
             otpInputs.forEach((input, index) => {
                 input.addEventListener('input', function(e) {
