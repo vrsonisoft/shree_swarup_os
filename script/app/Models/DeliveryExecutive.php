@@ -7,9 +7,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\BaseModel;
+use Laravel\Sanctum\HasApiTokens;
 
 class DeliveryExecutive extends BaseModel
 {
+    use HasApiTokens;
     use HasBranch;
     use Notifiable;
 

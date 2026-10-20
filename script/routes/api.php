@@ -28,8 +28,24 @@ Route::middleware(DesktopUniqueKeyMiddleware::class)->group(function () {
 });
 
 
-Route::prefix('partner/orders')->group(function () {
-    Route::get('/{status?}', [PosApiController::class, 'getOrders']);
+use App\Http\Controllers\Api\PartnerAuthController;
+
+Route::prefix('application-integration/partner')->group(function () {
+    Route::post('/auth/validate-domain', [HomeController::class, 'validatePartnerDomain']);
+    Route::post('/auth/login', [PartnerAuthController::class, 'login']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/auth/me', [PartnerAuthController::class, 'me']);
+        Route::post('/auth/logout', [PartnerAuthController::class, 'logout']);
+        Route::get('/orders/{status?}', [PosApiController::class, 'getOrders']);
+    });
+});
+
+Route::prefix('partner')->group(function () {
+    Route::post('/auth/login', [PartnerAuthController::class, 'login']);
+    Route::prefix('orders')->group(function () {
+        Route::get('/{status?}', [PosApiController::class, 'getOrders']);
+    });
 });
 
 Route::post('application-integration/partner/auth/validate-domain', [HomeController::class, 'validatePartnerDomain']);
