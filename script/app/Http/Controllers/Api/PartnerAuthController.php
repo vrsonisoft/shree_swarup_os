@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\ApiResource\OrderResource;
 use App\Http\Controllers\Controller;
+use App\Models\Branch;
 use App\Models\DeliveryExecutive;
+use App\Models\Order;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Modules\RestApi\Entities\DeviceToken;
 
 class PartnerAuthController extends Controller
 {
@@ -63,7 +68,7 @@ class PartnerAuthController extends Controller
 
         // If in test mode and no executive found, create one automatically
         if (!$executive && (env('DEMO_DELIVERY_OTP', true) || app()->environment('demo'))) {
-            $branch = \App\Models\Branch::first();
+            $branch = Branch::first();
             if ($branch) {
                 $executive = DeliveryExecutive::create([
                     'branch_id' => $branch->id,
@@ -99,8 +104,19 @@ class PartnerAuthController extends Controller
         // Set active & online
         $executive->update(['is_online' => true]);
 
+        // Find or create backing User model for Sanctum auth guard compatibility
+        $user = User::firstOrCreate(
+            ['email' => $executive->email],
+            [
+                'name' => $executive->name,
+                'password' => bcrypt('123456'),
+                'branch_id' => $executive->branch_id,
+                'restaurant_id' => $executive->branch?->restaurant_id,
+            ]
+        );
+
         // Generate Sanctum access token
-        $token = $executive->createToken('partner-rider-app')->plainTextToken;
+        $token = $user->createToken('partner-rider-app')->plainTextToken;
 
         $partnerData = [
             'id' => $executive->id,
@@ -141,26 +157,123 @@ class PartnerAuthController extends Controller
 
     public function me(Request $request)
     {
-        $executive = $request->user();
-
-        if (!$executive) {
+        $user = $request->user();
+        if (!$user) {
             return response()->json(['status' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        $executive = DeliveryExecutive::with('branch.restaurant.currency')
+            ->where('email', $user->email)
+            ->first();
+
+        $data = $executive ?: $user;
+
+        return response()->json([
+            'status' => true,
+            'data' => $data,
+            'partner' => $data,
+            'user' => $data,
+        ]);
+    }
+
+    public function orders(Request $request, $status = null)
+    {
+        $user = $request->user();
+        $executive = null;
+        if ($user) {
+            $executive = DeliveryExecutive::where('email', $user->email)->first();
+        }
+
+        $ordersQuery = Order::query()
+            ->with(['items', 'customer', 'table', 'waiter', 'kot', 'kot.items', 'kot.items.menuItem', 'branch.restaurant.currency']);
+
+        if ($executive) {
+            $ordersQuery->where('delivery_executive_id', $executive->id);
+        }
+
+        if ($status === 'active') {
+            $ordersQuery->whereNotIn('order_status', ['delivered', 'canceled']);
+        } elseif ($status === 'history' || $status === 'completed') {
+            $ordersQuery->whereIn('order_status', ['delivered', 'canceled']);
+        } elseif ($status) {
+            $ordersQuery->where('order_status', $status);
+        }
+
+        $orders = $ordersQuery->orderBy('id', 'desc')->get();
+        $data = OrderResource::collection($orders);
+
+        return response()->json([
+            'status' => true,
+            'success' => true,
+            'message' => 'Orders fetched successfully',
+            'data' => $data,
+            'orders' => $data,
+        ], 200);
+    }
+
+    public function registerDevice(Request $request)
+    {
+        $token = $request->input('token') ?? $request->input('device_token') ?? $request->input('fcm_token');
+        $platform = $request->input('platform', 'android');
+        $deviceId = $request->input('device_id');
+        $user = $request->user();
+
+        if ($user && $token && class_exists(DeviceToken::class)) {
+            try {
+                DeviceToken::updateOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'token' => $token,
+                    ],
+                    [
+                        'restaurant_id' => $user->restaurant_id,
+                        'branch_id' => $user->branch_id,
+                        'platform' => $platform,
+                        'device_id' => $deviceId,
+                        'app_type' => 'delivery_partner',
+                    ]
+                );
+            } catch (\Throwable $e) {
+                Log::warning('Device token registration skipped: ' . $e->getMessage());
+            }
         }
 
         return response()->json([
             'status' => true,
-            'data' => $executive,
-            'partner' => $executive,
-            'user' => $executive,
+            'success' => true,
+            'message' => 'Device registered successfully',
+        ], 200);
+    }
+
+    public function updateOrderStatus(Request $request, $orderId)
+    {
+        $order = Order::find($orderId);
+        if (!$order) {
+            return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        }
+
+        $status = $request->input('status') ?? $request->input('order_status');
+        if ($status) {
+            $order->update(['order_status' => $status]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'success' => true,
+            'message' => 'Order status updated successfully',
+            'order' => new OrderResource($order),
         ]);
     }
 
     public function logout(Request $request)
     {
-        $executive = $request->user();
-        if ($executive) {
-            $executive->update(['is_online' => false]);
-            $executive->currentAccessToken()?->delete();
+        $user = $request->user();
+        if ($user) {
+            $executive = DeliveryExecutive::where('email', $user->email)->first();
+            if ($executive) {
+                $executive->update(['is_online' => false]);
+            }
+            $user->currentAccessToken()?->delete();
         }
 
         return response()->json([
