@@ -11,10 +11,26 @@ class PartnerAuthController extends Controller
 {
     public function login(Request $request)
     {
-        Log::info('Partner Login Request received:', $request->all());
+        $body = $request->all();
+        if (empty($body)) {
+            $raw = $request->getContent();
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                $body = $decoded;
+            }
+        }
+
+        Log::info('Partner Login Request received:', $body);
 
         // Extract partner identifier from any possible key
-        $identifier = $request->input('partner_id')
+        $identifier = $body['partner_id']
+            ?? $body['partner_code']
+            ?? $body['unique_code']
+            ?? $body['code']
+            ?? $body['email']
+            ?? $body['phone']
+            ?? $body['username']
+            ?? $request->input('partner_id')
             ?? $request->input('partner_code')
             ?? $request->input('unique_code')
             ?? $request->input('code')
