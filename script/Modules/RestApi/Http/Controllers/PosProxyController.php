@@ -1118,33 +1118,33 @@ class PosProxyController extends Controller
             ], 401);
         }
 
-        // A Superadmin account has no restaurant_id (see app/Http/Middleware/SuperAdmin.php),
-        // so it can never match a restaurant-scoped "Admin_{restaurant_id}" role. Superadmin
-        // manages the whole platform, so it should also be allowed to force-unlock any table.
-        $isSuperAdmin = is_null($user->restaurant_id);
-        $isAdmin = $isSuperAdmin || $user->hasRole('Admin_' . $user->restaurant_id);
-        $isLockedByCurrentUser = $table->tableSession && $table->tableSession->locked_by_user_id === $user->id;
+        // Allow authenticated staff of the restaurant to unlock/close the table
+        $table->unlock(null, true);
 
-        if (! ($isAdmin || $isLockedByCurrentUser)) {
-            return response()->json([
-                'success' => false,
-                'message' => __('messages.tableUnlockFailed'),
-            ], 403);
+        // Mark table available and clear table session so it's fully closed
+        $table->available_status = 'available';
+        $table->status = 'active';
+        $table->saveQuietly();
+
+        if (class_exists(\App\Models\TableSession::class)) {
+            \App\Models\TableSession::where('table_id', $table->id)->delete();
         }
 
-        $result = $table->unlock(null, true);
-
-        if ($result['success']) {
-            return response()->json([
-                'success' => true,
-                'message' => __('messages.tableUnlockedSuccess', ['table' => $table->table_code]),
+        // Complete any lingering un-closed orders on this table so table status stays available
+        $branchId = $this->branch?->id ?? $table->branch_id;
+        DB::table('orders')
+            ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+            ->where('table_id', $table->id)
+            ->whereIn('status', ['draft', 'kot', 'billed', 'placed'])
+            ->update([
+                'status' => 'paid',
+                'order_status' => 'completed',
             ]);
-        }
 
         return response()->json([
-            'success' => false,
-            'message' => __('messages.tableUnlockFailed'),
-        ], 500);
+            'success' => true,
+            'message' => __('messages.tableUnlockedSuccess', ['table' => $table->table_code]),
+        ]);
     }
     public function getTodayReservations()
     {
@@ -1422,13 +1422,6 @@ class PosProxyController extends Controller
 
             $subTotal = max(0, $subTotal);
 
-            $taxTotal = 0;
-            if (! empty($taxes) && is_array($taxes)) {
-                foreach ($taxes as $tax) {
-                    $taxTotal += isset($tax['amount']) ? (float) $tax['amount'] : 0;
-                }
-            }
-
             // SECURITY: a customer using the ordering app must never be
             // able to self-apply an arbitrary discount (there is no coupon
             // system validating $discountAmount against a real promotion
@@ -1458,6 +1451,49 @@ class PosProxyController extends Controller
             }
 
             $discountedTotal = max(0, $subTotal - ($discountAmount ?? 0));
+
+            // Auto-resolve branch active taxes if not provided in the client payload
+            if (empty($taxes) || ! is_array($taxes)) {
+                $branchId = $this->branch?->id;
+                $restaurantId = $this->restaurant?->id;
+
+                $branchTaxes = Tax::query()
+                    ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
+                    ->when($restaurantId, function ($q) use ($restaurantId) {
+                        $q->orWhere(function ($query) use ($restaurantId) {
+                            if (Schema::hasColumn('taxes', 'restaurant_id')) {
+                                $query->where('restaurant_id', $restaurantId);
+                            }
+                            if (Schema::hasTable('restaurant_taxes') && Schema::hasColumn('restaurant_taxes', 'restaurant_id')) {
+                                $query->orWhereIn('id', function ($sub) use ($restaurantId) {
+                                    $sub->select('tax_id')
+                                        ->from('restaurant_taxes')
+                                        ->where('restaurant_id', $restaurantId);
+                                });
+                            }
+                        });
+                    })
+                    ->get();
+
+                $taxes = [];
+                foreach ($branchTaxes as $bt) {
+                    $taxPercent = (float) ($bt->tax_percent ?? 0);
+                    $taxAmount = round(($discountedTotal * $taxPercent) / 100, 2);
+                    $taxes[] = [
+                        'id' => $bt->id,
+                        'name' => $bt->tax_name ?? 'Tax',
+                        'tax_percent' => $taxPercent,
+                        'amount' => $taxAmount,
+                    ];
+                }
+            }
+
+            $taxTotal = 0;
+            if (! empty($taxes) && is_array($taxes)) {
+                foreach ($taxes as $tax) {
+                    $taxTotal += isset($tax['amount']) ? (float) $tax['amount'] : 0;
+                }
+            }
 
             $extraCharges = [];
             $chargesTotal = 0;
@@ -1503,9 +1539,16 @@ class PosProxyController extends Controller
                     $tableStatus = 'available';
                     break;
                 default:
-                    $status = 'draft';
-                    $orderStatus = 'placed';
-                    $tableStatus = 'available';
+                    // Staff or POS orders are auto-accepted into confirmed and KOT status
+                    if ($placedVia === 'pos' || Auth::check()) {
+                        $status = 'kot';
+                        $orderStatus = 'confirmed';
+                        $tableStatus = 'running';
+                    } else {
+                        $status = 'draft';
+                        $orderStatus = 'placed';
+                        $tableStatus = 'available';
+                    }
             }
 
             // Enforce safe values before persisting
@@ -3145,10 +3188,54 @@ class PosProxyController extends Controller
                 ], 404);
             }
 
+            // When an order is confirmed (accepted by Admin/Branch Head), promote to KOT status & create KOT
+            if (($payload['order_status'] ?? null) === 'confirmed' || $incomingStatus === 'confirmed') {
+                $orderModel = Order::where('branch_id', $this->branch->id)->find($id);
+                if ($orderModel) {
+                    if ($orderModel->status === 'draft') {
+                        $orderModel->status = 'kot';
+                        $orderModel->order_status = 'confirmed';
+                        $orderModel->save();
+                    }
+                    if (!\App\Models\Kot::where('order_id', $orderModel->id)->exists()) {
+                        $orderItemIds = \App\Models\OrderItem::where('order_id', $orderModel->id)->pluck('id')->toArray();
+                        if (!empty($orderItemIds)) {
+                            $kot = \App\Models\Kot::create([
+                                'branch_id' => $this->branch->id,
+                                'kot_number' => \App\Models\Kot::generateKotNumber($this->branch),
+                                'order_id' => $orderModel->id,
+                                'order_type_id' => $orderModel->order_type_id,
+                                'token_number' => \App\Models\Kot::generateTokenNumber($this->branch->id, $orderModel->order_type_id),
+                                'note' => $orderModel->note ?? '',
+                            ]);
+                            foreach ($orderItemIds as $orderItemId) {
+                                $orderItem = \App\Models\OrderItem::find($orderItemId);
+                                if ($orderItem) {
+                                    \App\Models\KotItem::create([
+                                        'kot_id' => $kot->id,
+                                        'order_item_id' => $orderItem->id,
+                                        'menu_item_id' => $orderItem->menu_item_id,
+                                        'menu_item_variation_id' => $orderItem->menu_item_variation_id,
+                                        'quantity' => $orderItem->quantity,
+                                    ]);
+                                }
+                            }
+                        }
+                    }
+                    if ($orderModel->table_id) {
+                        $tbl = \App\Models\Table::find($orderModel->table_id);
+                        if ($tbl) {
+                            $tbl->available_status = 'running';
+                            $tbl->saveQuietly();
+                        }
+                    }
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'order_id' => $id,
-                'status' => $data['status'],
+                'status' => $incomingStatus,
             ]);
         } catch (\Throwable $e) {
             Log::error('ApplicationIntegration updateOrderStatus failed', [
@@ -3925,6 +4012,12 @@ class PosProxyController extends Controller
             $query = \App\Models\Kot::where('branch_id', $this->branch->id)
                 ->with(['items.menuItem', 'items.menuItemVariation', 'items.modifierOptions', 'order', 'kotPlace', 'orderType'])
                 ->whereDate('created_at', $date)
+                ->where(function ($q) {
+                    $q->whereNull('order_id')
+                      ->orWhereHas('order', function ($oq) {
+                          $oq->whereNotIn('order_status', ['placed', 'draft']);
+                      });
+                })
                 ->orderByDesc('created_at');
 
             if ($status) {
@@ -3946,6 +4039,7 @@ class PosProxyController extends Controller
                     'order_id' => $kot->order_id,
                     'order_number' => $kot->order->order_number ?? null,
                     'order_type' => $kot->orderType?->name ?? $kot->order?->order_type ?? null,
+                    'order_status' => $kot->order?->order_status ?? null,
                     'table_name' => $kot->order?->table?->table_name ?? null,
                     'kitchen_place' => $kot->kotPlace?->name ?? null,
                     'kitchen_place_id' => $kot->kitchen_place_id,
