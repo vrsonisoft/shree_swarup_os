@@ -387,12 +387,43 @@ class PartnerAuthController extends Controller
 
         $status = $request->input('status') ?? $request->input('order_status');
         if ($status) {
-            $updateData = ['order_status' => $status];
-            if ($status === 'delivered') {
-                $updateData['delivered_at'] = now();
+            $rawStatus = strtolower(trim(str_replace(['-', ' '], '_', (string) $status)));
+
+            if (in_array($rawStatus, ['on_the_way', 'out_for_delivery', 'ontheway', 'outfordelivery'])) {
+                $updateData = ['order_status' => OrderStatus::OUT_FOR_DELIVERY];
+                if (is_null($order->delivery_started_at)) {
+                    $updateData['delivery_started_at'] = now();
+                }
+                $order->update($updateData);
+            } elseif (in_array($rawStatus, ['picked_up', 'pickedup', 'picked'])) {
+                $updateData = ['order_status' => OrderStatus::PICKED_UP];
+                if (is_null($order->delivery_started_at)) {
+                    $updateData['delivery_started_at'] = now();
+                }
+                $order->update($updateData);
+            } elseif (in_array($rawStatus, ['reached_destination', 'reached'])) {
+                $order->update(['order_status' => OrderStatus::REACHED_DESTINATION]);
+            } elseif (in_array($rawStatus, ['delivered', 'completed'])) {
+                $order->update([
+                    'order_status' => OrderStatus::DELIVERED,
+                    'delivered_at' => now(),
+                ]);
+
+                $executive = $this->resolveExecutive($request);
+                if ($executive) {
+                    $executive->update(['status' => DeliveryExecutive::STATUS_ACTIVE]);
+                }
+            } else {
+                $enum = OrderStatus::tryFrom($rawStatus);
+                if ($enum) {
+                    $order->update(['order_status' => $enum]);
+                } else {
+                    $order->update(['order_status' => $rawStatus]);
+                }
             }
-            $order->update($updateData);
         }
+
+        $order->refresh();
 
         return response()->json([
             'status' => true,

@@ -66,8 +66,14 @@ class OrderResource extends JsonResource
                 return 'Food is Ready';
             case OrderStatus::READY_FOR_PICKUP->value:
                 return 'Order is Ready for Pickup';
+            case OrderStatus::PICKED_UP->value:
+                return 'Order Picked Up';
             case OrderStatus::OUT_FOR_DELIVERY->value:
-                return 'Order is Out for Delivery';
+            case OrderStatus::ON_THE_WAY->value:
+            case 'on_the_way':
+                return 'On the Way';
+            case OrderStatus::REACHED_DESTINATION->value:
+                return 'Reached Destination';
             case OrderStatus::SERVED->value:
                 return 'Order Served';
             case OrderStatus::DELIVERED->value:
@@ -209,6 +215,7 @@ class OrderResource extends JsonResource
             'id' => $this->id,
             'order_number' => $this->formatted_order_number ?? $this->show_formatted_order_number ?? 'ORD-' . $this->order_number,
             'status' => $this->getStatusLabel(),
+            'order_status' => is_object($this->order_status) ? $this->order_status->value : $this->order_status,
             'restaurant' => [
                 'name' => $branch?->name ?? 'Restaurant',
                 'address' => $branch?->address ?? $restaurant?->address ?? '',

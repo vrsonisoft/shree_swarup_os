@@ -11,6 +11,7 @@ enum OrderStatus: string
     case READY_FOR_PICKUP = 'ready_for_pickup';
     case PICKED_UP = 'picked_up'; // Delivery person picked up the order
     case OUT_FOR_DELIVERY = 'out_for_delivery'; // Order is being delivered
+    case ON_THE_WAY = 'on_the_way'; // Rider is on the way (rider app status)
     case REACHED_DESTINATION = 'reached_destination'; // Delivery reached destination
     case SERVED = 'served'; // Order served at table (for dine-in)
     case DELIVERED = 'delivered'; // Order delivered to the customer
@@ -26,7 +27,7 @@ enum OrderStatus: string
             self::FOOD_READY => 'Food is Ready',
             self::READY_FOR_PICKUP => 'Order is Ready for Pickup',
             self::PICKED_UP => 'Picked Up by Delivery Person',
-            self::OUT_FOR_DELIVERY => 'Order is Out for Delivery',
+            self::OUT_FOR_DELIVERY, self::ON_THE_WAY => 'Order is Out for Delivery',
             self::REACHED_DESTINATION => 'Reached Destination',
             self::SERVED => 'Order Served',
             self::DELIVERED => 'Delivered',
@@ -57,7 +58,7 @@ enum OrderStatus: string
             self::FOOD_READY => 'bg-lime-100 text-lime-800 border-lime-300 dark:bg-lime-900/40 dark:text-lime-200 dark:border-lime-600',
             self::READY_FOR_PICKUP => 'bg-cyan-100 text-cyan-800 border-cyan-300 dark:bg-cyan-900/40 dark:text-cyan-200 dark:border-cyan-600',
             self::PICKED_UP => 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-200 dark:border-orange-600',
-            self::OUT_FOR_DELIVERY => 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-200 dark:border-blue-600',
+            self::OUT_FOR_DELIVERY, self::ON_THE_WAY => 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-200 dark:border-blue-600',
             self::REACHED_DESTINATION => 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300 dark:bg-fuchsia-900/40 dark:text-fuchsia-200 dark:border-fuchsia-600',
             self::SERVED => 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/40 dark:text-green-200 dark:border-green-600',
             self::DELIVERED => 'bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-900/40 dark:text-teal-200 dark:border-teal-600',
@@ -89,7 +90,7 @@ enum OrderStatus: string
             self::FOOD_READY => 'text-lime-500 dark:text-lime-300',
             self::READY_FOR_PICKUP => 'text-cyan-500 dark:text-cyan-300',
             self::PICKED_UP => 'text-orange-500 dark:text-orange-300',
-            self::OUT_FOR_DELIVERY => 'text-blue-500 dark:text-blue-300',
+            self::OUT_FOR_DELIVERY, self::ON_THE_WAY => 'text-blue-500 dark:text-blue-300',
             self::REACHED_DESTINATION => 'text-fuchsia-500 dark:text-fuchsia-300',
             self::SERVED => 'text-green-500 dark:text-green-300',
             self::DELIVERED => 'text-teal-500 dark:text-teal-300',
@@ -131,7 +132,7 @@ enum OrderStatus: string
                 self::FOOD_READY => $base.' bg-lime-100 border-lime-400 text-lime-900 dark:bg-lime-950/50 dark:border-lime-600 dark:text-lime-200 ring-2 ring-lime-400/80 dark:ring-lime-500/50'.$currentPulse,
                 self::READY_FOR_PICKUP => $base.' bg-cyan-100 border-cyan-300 text-cyan-800 dark:bg-cyan-950/50 dark:border-cyan-700 dark:text-cyan-200 ring-2 ring-cyan-300/70 dark:ring-cyan-600/40'.$currentPulse,
                 self::PICKED_UP => $base.' bg-orange-100 border-orange-300 text-orange-800 dark:bg-orange-950/50 dark:border-orange-700 dark:text-orange-200 ring-2 ring-orange-300/70 dark:ring-orange-600/40'.$currentPulse,
-                self::OUT_FOR_DELIVERY => $base.' bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-950/50 dark:border-blue-700 dark:text-blue-200 ring-2 ring-blue-300/70 dark:ring-blue-600/40'.$currentPulse,
+                self::OUT_FOR_DELIVERY, self::ON_THE_WAY => $base.' bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-950/50 dark:border-blue-700 dark:text-blue-200 ring-2 ring-blue-300/70 dark:ring-blue-600/40'.$currentPulse,
                 self::REACHED_DESTINATION => $base.' bg-fuchsia-100 border-fuchsia-300 text-fuchsia-800 dark:bg-fuchsia-950/50 dark:border-fuchsia-700 dark:text-fuchsia-200 ring-2 ring-fuchsia-300/70 dark:ring-fuchsia-600/40'.$currentPulse,
                 self::SERVED => $base.' bg-green-100 border-green-300 text-green-800 dark:bg-green-950/50 dark:border-green-700 dark:text-green-200 ring-2 ring-green-300/70 dark:ring-green-600/40'.$currentPulse,
                 self::DELIVERED => $base.' bg-teal-100 border-teal-300 text-teal-800 dark:bg-teal-950/50 dark:border-teal-700 dark:text-teal-200 ring-2 ring-teal-300/70 dark:ring-teal-600/40'.$currentPulse,
@@ -148,7 +149,7 @@ enum OrderStatus: string
                 self::FOOD_READY => $base.' bg-lime-50 border-lime-300 text-lime-800 dark:bg-lime-950/40 dark:border-lime-700 dark:text-lime-300',
                 self::READY_FOR_PICKUP => $base.' bg-cyan-50 border-cyan-200 text-cyan-700 dark:bg-cyan-950/30 dark:border-cyan-800 dark:text-cyan-300',
                 self::PICKED_UP => $base.' bg-orange-50 border-orange-200 text-orange-700 dark:bg-orange-950/30 dark:border-orange-800 dark:text-orange-300',
-                self::OUT_FOR_DELIVERY => $base.' bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300',
+                self::OUT_FOR_DELIVERY, self::ON_THE_WAY => $base.' bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300',
                 self::REACHED_DESTINATION => $base.' bg-fuchsia-50 border-fuchsia-200 text-fuchsia-700 dark:bg-fuchsia-950/30 dark:border-fuchsia-800 dark:text-fuchsia-300',
                 self::SERVED => $base.' bg-green-50 border-green-200 text-green-700 dark:bg-green-950/30 dark:border-green-800 dark:text-green-300',
                 self::DELIVERED => $base.' bg-teal-50 border-teal-200 text-teal-700 dark:bg-teal-950/30 dark:border-teal-800 dark:text-teal-300',
@@ -271,7 +272,7 @@ enum OrderStatus: string
 
             self::REACHED_DESTINATION => '<svg class="'.$svgClass.'" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C8.14 2 5 5.14 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.86-3.14-7-7-7m0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5"/></svg>',
 
-            self::OUT_FOR_DELIVERY => '<svg class="'.$svgClass.'" fill="currentColor" viewBox="0 0 100 100" aria-hidden="true"><path d="M73.333 40h-10L41.666 28.333 30 46.666v6.666h13.604l6.667 20h7.027l-8.89-26.666H37.902l6.061-9.524 17.69 9.524h11.68z"/><path d="m76.667 40-3.334-13.334H65l-1.667 6.667h6.514l1.969 7.878zM58.333 18.333A8.336 8.336 0 0 1 50 26.666c-4.604 0-8.334-3.73-8.334-8.333S45.396 10 50 10a8.336 8.336 0 0 1 8.333 8.333M10 30v23.332h20V30zm13.334 16.666h-6.668v-10h6.668z"/><path d="M76.667 51.666V40H70v11.666c0 3.666-1.341 9.35-2.981 12.631L60 78.332H46.666l-6.666-20H20c-5.522 0-10 4.477-10 10v10h29.639L41.86 85h22.261l3.333-6.668H90v-6.666c0-7.812-5.091-14.883-13.333-20m-60.001 20v-3.334A3.337 3.337 0 0 1 20 65h15.195l2.222 6.666zm54.122 0 2.193-4.389c1.12-2.238 2.09-5.188 2.758-8.166 3.561 2.715 7.594 7.012 7.594 12.555z"/><path d="M73.333 46.666h10v6.666h-10zM10 13.333V10h23.334v5zm6.666 10V20h20v5zM66.667 80c0 5.523 4.476 10 10 10 5.521 0 10-4.477 10-10 0-1.83-.527-3.523-1.387-5H68.054c-.86 1.477-1.387 3.17-1.387 5m10-3.334a3.333 3.333 0 1 1 0 6.666A3.33 3.33 0 0 1 73.333 80a3.33 3.33 0 0 1 3.334-3.334M15 80c0 5.523 4.477 10 10 10 5.521 0 10-4.477 10-10 0-1.83-.527-3.523-1.387-5H16.387C15.527 76.477 15 78.17 15 80m10-3.334a3.333 3.333 0 1 1 0 6.666A3.33 3.33 0 0 1 21.666 80 3.33 3.33 0 0 1 25 76.666"/></svg>',
+            self::OUT_FOR_DELIVERY, self::ON_THE_WAY => '<svg class="'.$svgClass.'" fill="currentColor" viewBox="0 0 100 100" aria-hidden="true"><path d="M73.333 40h-10L41.666 28.333 30 46.666v6.666h13.604l6.667 20h7.027l-8.89-26.666H37.902l6.061-9.524 17.69 9.524h11.68z"/><path d="m76.667 40-3.334-13.334H65l-1.667 6.667h6.514l1.969 7.878zM58.333 18.333A8.336 8.336 0 0 1 50 26.666c-4.604 0-8.334-3.73-8.334-8.333S45.396 10 50 10a8.336 8.336 0 0 1 8.333 8.333M10 30v23.332h20V30zm13.334 16.666h-6.668v-10h6.668z"/><path d="M76.667 51.666V40H70v11.666c0 3.666-1.341 9.35-2.981 12.631L60 78.332H46.666l-6.666-20H20c-5.522 0-10 4.477-10 10v10h29.639L41.86 85h22.261l3.333-6.668H90v-6.666c0-7.812-5.091-14.883-13.333-20m-60.001 20v-3.334A3.337 3.337 0 0 1 20 65h15.195l2.222 6.666zm54.122 0 2.193-4.389c1.12-2.238 2.09-5.188 2.758-8.166 3.561 2.715 7.594 7.012 7.594 12.555z"/><path d="M73.333 46.666h10v6.666h-10zM10 13.333V10h23.334v5zm6.666 10V20h20v5zM66.667 80c0 5.523 4.476 10 10 10 5.521 0 10-4.477 10-10 0-1.83-.527-3.523-1.387-5H68.054c-.86 1.477-1.387 3.17-1.387 5m10-3.334a3.333 3.333 0 1 1 0 6.666A3.33 3.33 0 0 1 73.333 80a3.33 3.33 0 0 1 3.334-3.334M15 80c0 5.523 4.477 10 10 10 5.521 0 10-4.477 10-10 0-1.83-.527-3.523-1.387-5H16.387C15.527 76.477 15 78.17 15 80m10-3.334a3.333 3.333 0 1 1 0 6.666A3.33 3.33 0 0 1 21.666 80 3.33 3.33 0 0 1 25 76.666"/></svg>',
 
             self::DELIVERED, self::SERVED => '<svg class="'.$svgClass.'" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>',
 
