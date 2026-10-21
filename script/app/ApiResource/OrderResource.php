@@ -236,7 +236,7 @@ class OrderResource extends JsonResource
             ],
             'partner' => [
                 'name' => $deliveryExecutive?->name ?? '',
-                'contact' => $deliveryExecutive?->phone ?? $deliveryExecutive?->contact ?? '',
+                'contact' => (string) ($deliveryExecutive?->phone ?? $deliveryExecutive?->contact ?? ''),
             ],
             'pickupETA' => $this->formatETA($this->estimated_eta_min),
             'dropETA' => $this->formatETA($this->estimated_eta_max),
