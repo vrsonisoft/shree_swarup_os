@@ -192,6 +192,33 @@ class AppServiceProvider extends ServiceProvider
             Log::error('Error in Translatable fallback: ' . $e->getMessage());
         }
 
+        if (class_exists(\Laravel\Sanctum\Sanctum::class)) {
+            \Laravel\Sanctum\Sanctum::getAccessTokenFromRequestUsing(function (\Illuminate\Http\Request $request) {
+                $token = $request->bearerToken();
+                if ($token) {
+                    return $token;
+                }
+
+                $auth = $request->header('Authorization') ?? $request->header('authorization');
+                if ($auth) {
+                    if (preg_match('/^Bearer\s+(.*)$/i', $auth, $matches)) {
+                        return trim($matches[1]);
+                    }
+                    return trim($auth);
+                }
+
+                $custom = $request->header('token')
+                    ?? $request->header('access_token')
+                    ?? $request->header('x-access-token')
+                    ?? $request->header('partner_token')
+                    ?? $request->input('token')
+                    ?? $request->input('access_token')
+                    ?? $request->query('token');
+
+                return $custom ? trim((string) $custom) : null;
+            });
+        }
+
         // Model::preventLazyLoading(app()->environment('development'));
     }
 }

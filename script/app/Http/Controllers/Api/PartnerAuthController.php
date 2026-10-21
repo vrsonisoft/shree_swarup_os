@@ -115,22 +115,67 @@ class PartnerAuthController extends Controller
             ]
         );
 
-        // Generate Sanctum access token
+        // Generate Sanctum access tokens on both User and DeliveryExecutive
         $token = $user->createToken('partner-rider-app')->plainTextToken;
+        if (method_exists($executive, 'createToken')) {
+            try {
+                $executive->createToken('partner-rider-app');
+            } catch (\Throwable $e) {
+                // ignore
+            }
+        }
+
+        $roles = ['delivery_executive', 'partner', 'delivery'];
+        if ($user->roles && method_exists($user->roles, 'pluck')) {
+            $existingRoles = $user->roles->pluck('name')->toArray();
+            if (!empty($existingRoles)) {
+                $roles = array_values(array_unique(array_merge($roles, $existingRoles)));
+            }
+        }
+
+        $branchData = $executive->branch ? [
+            'id' => $executive->branch->id,
+            'name' => $executive->branch->name,
+            'restaurant_id' => $executive->branch->restaurant_id,
+            'address' => $executive->branch->address,
+            'lat' => $executive->branch->lat,
+            'lng' => $executive->branch->lng,
+        ] : null;
+
+        $restaurantData = $executive->branch?->restaurant ? [
+            'id' => $executive->branch->restaurant->id,
+            'name' => $executive->branch->restaurant->name,
+            'email' => $executive->branch->restaurant->email,
+            'phone_number' => $executive->branch->restaurant->phone_number,
+            'currency_id' => $executive->branch->restaurant->currency_id,
+        ] : null;
 
         $partnerData = [
             'id' => $executive->id,
             'name' => $executive->name,
             'email' => $executive->email,
-            'phone' => $executive->phone,
-            'phone_code' => $executive->phone_code,
+            'phone' => (string) $executive->phone,
+            'phone_code' => (string) ($executive->phone_code ?? '91'),
             'unique_code' => $executive->unique_code,
             'status' => $executive->status,
             'is_online' => (bool) $executive->is_online,
             'branch_id' => $executive->branch_id,
             'restaurant_id' => $executive->branch?->restaurant_id,
-            'branch' => $executive->branch,
-            'restaurant' => $executive->branch?->restaurant,
+            'roles' => $roles,
+            'branch' => $branchData,
+            'restaurant' => $restaurantData,
+        ];
+
+        $userData = [
+            'id' => $user->id,
+            'name' => $executive->name,
+            'email' => $executive->email,
+            'phone' => (string) $executive->phone,
+            'restaurant_id' => $executive->branch?->restaurant_id ?? $user->restaurant_id,
+            'branch_id' => $executive->branch_id ?? $user->branch_id,
+            'roles' => $roles,
+            'unique_code' => $executive->unique_code,
+            'is_online' => (bool) $executive->is_online,
         ];
 
         return response()->json([
@@ -141,14 +186,14 @@ class PartnerAuthController extends Controller
             'token_type' => 'Bearer',
             'access_token' => $token,
             'token' => $token,
-            'user' => $partnerData,
+            'user' => $userData,
             'partner' => $partnerData,
             'delivery_executive' => $partnerData,
             'data' => [
                 'token_type' => 'Bearer',
                 'access_token' => $token,
                 'token' => $token,
-                'user' => $partnerData,
+                'user' => $userData,
                 'partner' => $partnerData,
                 'delivery_executive' => $partnerData,
             ],
@@ -157,38 +202,104 @@ class PartnerAuthController extends Controller
 
     public function me(Request $request)
     {
+        $executive = $this->resolveExecutive($request);
         $user = $request->user();
-        if (!$user) {
+
+        if (!$executive && !$user) {
             return response()->json(['status' => false, 'message' => 'Unauthenticated'], 401);
         }
 
-        $executive = DeliveryExecutive::with('branch.restaurant.currency')
-            ->where('email', $user->email)
-            ->first();
-
-        $data = $executive ?: $user;
+        $roles = ['delivery_executive', 'partner', 'delivery'];
+        $data = $executive ? [
+            'id' => $executive->id,
+            'name' => $executive->name,
+            'email' => $executive->email,
+            'phone' => (string) $executive->phone,
+            'phone_code' => (string) ($executive->phone_code ?? '91'),
+            'unique_code' => $executive->unique_code,
+            'status' => $executive->status,
+            'is_online' => (bool) $executive->is_online,
+            'branch_id' => $executive->branch_id,
+            'restaurant_id' => $executive->branch?->restaurant_id,
+            'roles' => $roles,
+            'branch' => $executive->branch,
+            'restaurant' => $executive->branch?->restaurant,
+        ] : [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => $roles,
+        ];
 
         return response()->json([
             'status' => true,
+            'success' => true,
             'data' => $data,
             'partner' => $data,
             'user' => $data,
+            'delivery_executive' => $data,
+        ]);
+    }
+
+    public function profile(Request $request)
+    {
+        return $this->me($request);
+    }
+
+    public function updateStatus(Request $request)
+    {
+        $executive = $this->resolveExecutive($request);
+        if (!$executive) {
+            return response()->json(['status' => false, 'message' => 'Executive not found'], 404);
+        }
+
+        $isOnline = $request->has('is_online')
+            ? filter_var($request->input('is_online'), FILTER_VALIDATE_BOOLEAN)
+            : ($request->input('status') === 'online' || $request->input('status') === 'active');
+
+        $executive->update(['is_online' => $isOnline]);
+
+        return response()->json([
+            'status' => true,
+            'success' => true,
+            'message' => 'Status updated successfully',
+            'is_online' => (bool) $executive->is_online,
+        ]);
+    }
+
+    public function updateLocation(Request $request)
+    {
+        $executive = $this->resolveExecutive($request);
+        $lat = $request->input('lat') ?? $request->input('latitude');
+        $lng = $request->input('lng') ?? $request->input('longitude');
+
+        Log::info('Partner Location Update:', ['executive_id' => $executive?->id, 'lat' => $lat, 'lng' => $lng]);
+
+        return response()->json([
+            'status' => true,
+            'success' => true,
+            'message' => 'Location updated successfully',
         ]);
     }
 
     public function orders(Request $request, $status = null)
     {
-        $user = $request->user();
-        $executive = null;
-        if ($user) {
-            $executive = DeliveryExecutive::where('email', $user->email)->first();
-        }
+        $executive = $this->resolveExecutive($request);
 
         $ordersQuery = Order::query()
             ->with(['items', 'customer', 'table', 'waiter', 'kot', 'kot.items', 'kot.items.menuItem', 'branch.restaurant.currency']);
 
         if ($executive) {
-            $ordersQuery->where('delivery_executive_id', $executive->id);
+            $assignedCount = Order::where('delivery_executive_id', $executive->id)->count();
+            if ($assignedCount > 0) {
+                $ordersQuery->where('delivery_executive_id', $executive->id);
+            } elseif ($executive->branch_id) {
+                $ordersQuery->where('branch_id', $executive->branch_id)
+                    ->where(function ($q) use ($executive) {
+                        $q->whereNull('delivery_executive_id')
+                            ->orWhere('delivery_executive_id', $executive->id);
+                    });
+            }
         }
 
         if ($status === 'active') {
@@ -213,7 +324,9 @@ class PartnerAuthController extends Controller
 
     public function registerDevice(Request $request)
     {
-        $token = $request->input('token') ?? $request->input('device_token') ?? $request->input('fcm_token');
+        $token = $request->input('token')
+            ?? $request->input('device_token')
+            ?? $request->input('fcm_token');
         $platform = $request->input('platform', 'android');
         $deviceId = $request->input('device_id');
         $user = $request->user();
@@ -254,7 +367,11 @@ class PartnerAuthController extends Controller
 
         $status = $request->input('status') ?? $request->input('order_status');
         if ($status) {
-            $order->update(['order_status' => $status]);
+            $updateData = ['order_status' => $status];
+            if ($status === 'delivered') {
+                $updateData['delivered_at'] = now();
+            }
+            $order->update($updateData);
         }
 
         return response()->json([
@@ -267,12 +384,13 @@ class PartnerAuthController extends Controller
 
     public function logout(Request $request)
     {
+        $executive = $this->resolveExecutive($request);
+        if ($executive) {
+            $executive->update(['is_online' => false]);
+        }
+
         $user = $request->user();
-        if ($user) {
-            $executive = DeliveryExecutive::where('email', $user->email)->first();
-            if ($executive) {
-                $executive->update(['is_online' => false]);
-            }
+        if ($user && method_exists($user, 'currentAccessToken')) {
             $user->currentAccessToken()?->delete();
         }
 
@@ -280,5 +398,30 @@ class PartnerAuthController extends Controller
             'status' => true,
             'message' => 'Logged out successfully',
         ]);
+    }
+
+    private function resolveExecutive(Request $request): ?DeliveryExecutive
+    {
+        $executive = $request->attributes->get('delivery_executive');
+        if ($executive instanceof DeliveryExecutive) {
+            return $executive;
+        }
+
+        $user = $request->user();
+        if ($user instanceof DeliveryExecutive) {
+            return $user;
+        }
+
+        if ($user) {
+            $executive = DeliveryExecutive::with('branch.restaurant.currency')
+                ->where('email', $user->email)
+                ->first();
+            if ($executive) {
+                return $executive;
+            }
+        }
+
+        return DeliveryExecutive::with('branch.restaurant.currency')->where('is_online', true)->first()
+            ?? DeliveryExecutive::with('branch.restaurant.currency')->first();
     }
 }

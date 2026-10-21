@@ -29,25 +29,46 @@ Route::middleware(DesktopUniqueKeyMiddleware::class)->group(function () {
 
 
 use App\Http\Controllers\Api\PartnerAuthController;
+use App\Http\Middleware\EnsurePartnerApiAuthenticated;
 
+// Delivery Partner API routes (TableTrack Rider & Custom Delivery Apps)
 Route::prefix('application-integration/partner')->group(function () {
     Route::post('/auth/validate-domain', [HomeController::class, 'validatePartnerDomain']);
     Route::post('/auth/login', [PartnerAuthController::class, 'login']);
     Route::post('/devices/register', [PartnerAuthController::class, 'registerDevice']);
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(EnsurePartnerApiAuthenticated::class)->group(function () {
         Route::get('/auth/me', [PartnerAuthController::class, 'me']);
+        Route::get('/profile', [PartnerAuthController::class, 'profile']);
         Route::post('/auth/logout', [PartnerAuthController::class, 'logout']);
         Route::get('/orders/{status?}', [PartnerAuthController::class, 'orders']);
         Route::post('/orders/{id}/status', [PartnerAuthController::class, 'updateOrderStatus']);
+        Route::put('/orders/{id}/status', [PartnerAuthController::class, 'updateOrderStatus']);
+        Route::post('/orders/{id}/delivered', [PartnerAuthController::class, 'updateOrderStatus']);
+        Route::post('/status', [PartnerAuthController::class, 'updateStatus']);
+        Route::post('/location', [PartnerAuthController::class, 'updateLocation']);
     });
 });
 
 Route::prefix('partner')->group(function () {
+    Route::post('/auth/validate-domain', [HomeController::class, 'validatePartnerDomain']);
     Route::post('/auth/login', [PartnerAuthController::class, 'login']);
     Route::post('/devices/register', [PartnerAuthController::class, 'registerDevice']);
-    Route::get('/orders/{status?}', [PartnerAuthController::class, 'orders']);
+
+    Route::middleware(EnsurePartnerApiAuthenticated::class)->group(function () {
+        Route::get('/auth/me', [PartnerAuthController::class, 'me']);
+        Route::get('/profile', [PartnerAuthController::class, 'profile']);
+        Route::post('/auth/logout', [PartnerAuthController::class, 'logout']);
+        Route::get('/orders/{status?}', [PartnerAuthController::class, 'orders']);
+        Route::post('/orders/{id}/status', [PartnerAuthController::class, 'updateOrderStatus']);
+        Route::put('/orders/{id}/status', [PartnerAuthController::class, 'updateOrderStatus']);
+        Route::post('/orders/{id}/delivered', [PartnerAuthController::class, 'updateOrderStatus']);
+        Route::post('/status', [PartnerAuthController::class, 'updateStatus']);
+        Route::post('/location', [PartnerAuthController::class, 'updateLocation']);
+    });
 });
+
+Route::post('application-integration/waiter/fcm-token', [PartnerAuthController::class, 'registerDevice']);
 
 Route::post('application-integration/partner/auth/validate-domain', [HomeController::class, 'validatePartnerDomain']);
 Route::get('/bootstrap', [OfflineController::class, 'bootstrap']);
