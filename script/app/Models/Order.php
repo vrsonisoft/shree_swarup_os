@@ -31,6 +31,8 @@ class Order extends BaseModel
         'order_status' => OrderStatus::class,
         'cancel_time' => 'datetime',
         'pickup_date' => 'datetime',
+        'delivery_started_at' => 'datetime',
+        'delivered_at' => 'datetime',
     ];
 
     protected static function boot()

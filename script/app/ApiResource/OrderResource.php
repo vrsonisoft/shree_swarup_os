@@ -89,22 +89,31 @@ class OrderResource extends JsonResource
         $timeline = [];
 
         if ($this->created_at) {
+            $time = $this->created_at instanceof \DateTimeInterface
+                ? $this->created_at->format('H:i')
+                : \Carbon\Carbon::parse($this->created_at)->format('H:i');
             $timeline[] = [
-                'time' => $this->created_at->format('H:i'),
+                'time' => $time,
                 'label' => 'Order placed',
             ];
         }
 
         if ($this->delivery_started_at) {
+            $time = $this->delivery_started_at instanceof \DateTimeInterface
+                ? $this->delivery_started_at->format('H:i')
+                : \Carbon\Carbon::parse($this->delivery_started_at)->format('H:i');
             $timeline[] = [
-                'time' => $this->delivery_started_at->format('H:i'),
+                'time' => $time,
                 'label' => 'Out for delivery',
             ];
         }
 
         if ($this->delivered_at) {
+            $time = $this->delivered_at instanceof \DateTimeInterface
+                ? $this->delivered_at->format('H:i')
+                : \Carbon\Carbon::parse($this->delivered_at)->format('H:i');
             $timeline[] = [
-                'time' => $this->delivered_at->format('H:i'),
+                'time' => $time,
                 'label' => 'Delivered',
             ];
         }
