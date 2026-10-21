@@ -414,6 +414,17 @@ class PartnerAuthController extends Controller
                 if ($executive) {
                     $executive->update(['status' => DeliveryExecutive::STATUS_ACTIVE]);
                 }
+
+                // Automatically record cash collection if COD delivery order
+                try {
+                    $cashService = app(\App\Services\OrderCashCollectionService::class);
+                    if ($cashService->requiresCashCollection($order) && !$cashService->hasRecordedCollection($order)) {
+                        $expectedAmount = $cashService->calculateExpectedAmount($order);
+                        $cashService->recordCollection($order, 'collected', $expectedAmount, 'Collected upon delivery');
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('Cash collection recording on delivery skipped: ' . $e->getMessage());
+                }
             } else {
                 $enum = OrderStatus::tryFrom($rawStatus);
                 if ($enum) {

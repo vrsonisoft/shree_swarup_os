@@ -7,6 +7,7 @@ use App\Models\DeliveryCashSettlement;
 use App\Models\OrderCashCollection;
 use App\Services\DeliveryCashSettlementService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Jantinnerezo\LivewireAlert\LivewireAlert;
 use Livewire\Component;
@@ -87,6 +88,123 @@ class CashMonitoring extends Component
         app(DeliveryCashSettlementService::class)->reject($settlement, auth()->id());
 
         $this->alert('success', __('modules.delivery.settlementRejectedSuccess'), [
+            'toast' => true,
+            'position' => 'top-end',
+            'showCancelButton' => false,
+        ]);
+    }
+
+    public function settleExecutive(int $executiveId): void
+    {
+        if (!Schema::hasTable('order_cash_collections') || !Schema::hasTable('delivery_cash_settlements')) {
+            return;
+        }
+
+        $collections = OrderCashCollection::withoutGlobalScopes()
+            ->where('delivery_executive_id', $executiveId)
+            ->whereIn('status', ['pending_collection', 'collected', 'submitted'])
+            ->get();
+
+        if ($collections->isEmpty()) {
+            $this->alert('info', 'No pending collections found for this executive.', [
+                'toast' => true,
+                'position' => 'top-end',
+            ]);
+            return;
+        }
+
+        DB::transaction(function () use ($collections, $executiveId) {
+            $executive = \App\Models\DeliveryExecutive::find($executiveId);
+            $totalAmount = 0.0;
+
+            foreach ($collections as $col) {
+                $amt = (float) ($col->collected_amount ?? $col->expected_amount ?? 0);
+                $totalAmount += $amt;
+            }
+
+            $settlement = DeliveryCashSettlement::create([
+                'branch_id' => $executive?->branch_id ?? branch()?->id,
+                'delivery_executive_id' => $executiveId,
+                'submitted_amount' => $totalAmount,
+                'verified_amount' => $totalAmount,
+                'status' => 'approved',
+                'notes' => 'Settled directly by Admin / Cashier',
+                'submitted_at' => now(),
+                'approved_at' => now(),
+                'approved_by' => auth()->id(),
+            ]);
+
+            $settlement->update([
+                'settlement_number' => 'SET-' . now()->format('Ymd') . '-' . str_pad((string) $settlement->id, 4, '0', STR_PAD_LEFT),
+            ]);
+
+            foreach ($collections as $col) {
+                $amt = (float) ($col->collected_amount ?? $col->expected_amount ?? 0);
+                $settlement->items()->create([
+                    'order_cash_collection_id' => $col->id,
+                    'order_id' => $col->order_id,
+                    'amount' => $amt,
+                ]);
+
+                $col->update([
+                    'collected_amount' => $amt,
+                    'status' => 'settled',
+                    'recorded_at' => $col->recorded_at ?? now(),
+                    'settled_at' => now(),
+                    'settled_by' => auth()->id(),
+                ]);
+            }
+        });
+
+        $this->alert('success', 'Cash settled successfully for delivery executive!', [
+            'toast' => true,
+            'position' => 'top-end',
+            'showCancelButton' => false,
+        ]);
+    }
+
+    public function settleOrderCollection(int $collectionId): void
+    {
+        $collection = OrderCashCollection::withoutGlobalScopes()->findOrFail($collectionId);
+        if ($collection->status === 'settled') {
+            return;
+        }
+
+        DB::transaction(function () use ($collection) {
+            $amt = (float) ($collection->collected_amount ?? $collection->expected_amount ?? 0);
+
+            $settlement = DeliveryCashSettlement::create([
+                'branch_id' => $collection->branch_id,
+                'delivery_executive_id' => $collection->delivery_executive_id,
+                'submitted_amount' => $amt,
+                'verified_amount' => $amt,
+                'status' => 'approved',
+                'notes' => 'Order #' . ($collection->order?->order_number ?? $collection->order_id) . ' settled by Admin',
+                'submitted_at' => now(),
+                'approved_at' => now(),
+                'approved_by' => auth()->id(),
+            ]);
+
+            $settlement->update([
+                'settlement_number' => 'SET-' . now()->format('Ymd') . '-' . str_pad((string) $settlement->id, 4, '0', STR_PAD_LEFT),
+            ]);
+
+            $settlement->items()->create([
+                'order_cash_collection_id' => $collection->id,
+                'order_id' => $collection->order_id,
+                'amount' => $amt,
+            ]);
+
+            $collection->update([
+                'collected_amount' => $amt,
+                'status' => 'settled',
+                'recorded_at' => $collection->recorded_at ?? now(),
+                'settled_at' => now(),
+                'settled_by' => auth()->id(),
+            ]);
+        });
+
+        $this->alert('success', 'Order COD settled successfully!', [
             'toast' => true,
             'position' => 'top-end',
             'showCancelButton' => false,

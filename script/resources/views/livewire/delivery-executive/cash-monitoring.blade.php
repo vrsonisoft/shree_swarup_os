@@ -119,6 +119,7 @@
                                 <th scope="col" class="px-3 py-2 text-left text-[10px] font-medium uppercase tracking-wide text-gray-600 dark:text-gray-300">@lang('modules.delivery.collectedAmount')</th>
                                 <th scope="col" class="px-3 py-2 text-left text-[10px] font-medium uppercase tracking-wide text-gray-600 dark:text-gray-300">@lang('app.status')</th>
                                 <th scope="col" class="px-3 py-2 text-right text-[10px] font-medium uppercase tracking-wide text-gray-600 dark:text-gray-300">@lang('app.dateTime')</th>
+                                <th scope="col" class="px-3 py-2 text-right text-[10px] font-medium uppercase tracking-wide text-gray-600 dark:text-gray-300">@lang('app.action')</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 bg-white dark:divide-gray-700/80 dark:bg-gray-800">
@@ -145,10 +146,25 @@
                                     <td class="px-3 py-2 text-right text-xs text-gray-700 dark:text-gray-300 whitespace-nowrap">
                                         @include('common.date-time-display', ['date' => $item->recorded_at ?? $item->updated_at])
                                     </td>
+                                    <td class="px-3 py-2 text-right text-xs whitespace-nowrap">
+                                        @if ($item->status !== 'settled')
+                                            <button type="button"
+                                                wire:click="settleOrderCollection({{ $item->id }})"
+                                                wire:confirm="Confirm settle COD for order {{ $item->order?->show_formatted_order_number }}?"
+                                                class="rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-medium text-white hover:bg-emerald-700">
+                                                Settle
+                                            </button>
+                                        @else
+                                            <span class="inline-flex items-center text-[11px] text-emerald-600 font-medium">
+                                                <svg class="w-3.5 h-3.5 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                Settled
+                                            </span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-3 py-8 text-center text-sm text-gray-500 dark:text-gray-400">@lang('modules.delivery.noCodCollectionsFound')</td>
+                                    <td colspan="8" class="px-3 py-8 text-center text-sm text-gray-500 dark:text-gray-400">@lang('modules.delivery.noCodCollectionsFound')</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -224,14 +240,23 @@
             @else
                 <div class="divide-y divide-gray-200 dark:divide-gray-700/80">
                     @forelse ($summary as $executive)
-                        <div class="flex items-center justify-between px-3 py-2.5 gap-3">
+                        <div class="flex items-center justify-between px-3.5 py-3 gap-3">
                             <div class="min-w-0">
-                                <div class="text-xs font-medium text-gray-900 dark:text-white truncate">{{ $executive->deliveryExecutive?->name ?? '--' }}</div>
+                                <div class="text-xs font-semibold text-gray-900 dark:text-white truncate">{{ $executive->deliveryExecutive?->name ?? '--' }}</div>
                                 <div class="text-[11px] text-gray-500 dark:text-gray-400 truncate">{{ ($executive->deliveryExecutive?->phone_code ? '+'. $executive->deliveryExecutive?->phone_code . ' ' : '') . ($executive->deliveryExecutive?->phone ?? '--') }}</div>
                             </div>
-                            <div class="text-right shrink-0">
-                                <div class="text-xs font-semibold tabular-nums text-gray-900 dark:text-white">{{ currency_format((float) ($executive->cod_pending_amount ?? 0), restaurant()->currency_id) }}</div>
-                                <div class="text-[11px] text-gray-500 dark:text-gray-400">{{ trans_choice('modules.delivery.pendingOrdersCount', (int) ($executive->cod_pending_orders ?? 0), ['count' => (int) ($executive->cod_pending_orders ?? 0)]) }}</div>
+                            <div class="flex items-center gap-3 shrink-0">
+                                <div class="text-right">
+                                    <div class="text-xs font-bold tabular-nums text-gray-900 dark:text-white">{{ currency_format((float) ($executive->cod_pending_amount ?? 0), restaurant()->currency_id) }}</div>
+                                    <div class="text-[10px] text-amber-600 dark:text-amber-400 font-medium">{{ trans_choice('modules.delivery.pendingOrdersCount', (int) ($executive->cod_pending_orders ?? 0), ['count' => (int) ($executive->cod_pending_orders ?? 0)]) }}</div>
+                                </div>
+                                <button type="button"
+                                    wire:click="settleExecutive({{ $executive->delivery_executive_id }})"
+                                    wire:confirm="Confirm settlement: Have you received {{ currency_format((float) ($executive->cod_pending_amount ?? 0), restaurant()->currency_id) }} cash from {{ $executive->deliveryExecutive?->name }}?"
+                                    class="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    Settle Cash
+                                </button>
                             </div>
                         </div>
                     @empty
