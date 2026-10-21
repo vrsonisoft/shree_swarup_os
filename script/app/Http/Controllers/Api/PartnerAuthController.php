@@ -313,10 +313,22 @@ class PartnerAuthController extends Controller
             }
         }
 
+        $inactiveStatuses = [
+            OrderStatus::DELIVERED->value,
+            OrderStatus::COMPLETED->value,
+            OrderStatus::CANCELLED->value,
+            OrderStatus::SERVED->value,
+            'delivered',
+            'completed',
+            'cancelled',
+            'canceled',
+            'served',
+        ];
+
         if ($status === 'active') {
-            $ordersQuery->whereNotIn('order_status', ['delivered', 'canceled']);
+            $ordersQuery->whereNotIn('order_status', $inactiveStatuses);
         } elseif ($status === 'history' || $status === 'completed') {
-            $ordersQuery->whereIn('order_status', ['delivered', 'canceled']);
+            $ordersQuery->whereIn('order_status', $inactiveStatuses);
         } elseif ($status) {
             $ordersQuery->where('order_status', $status);
         }
