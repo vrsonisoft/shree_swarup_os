@@ -287,7 +287,17 @@ class PartnerAuthController extends Controller
         $executive = $this->resolveExecutive($request);
 
         $ordersQuery = Order::query()
-            ->with(['items', 'customer', 'table', 'waiter', 'kot', 'kot.items', 'kot.items.menuItem', 'branch.restaurant.currency']);
+            ->with([
+                'items',
+                'customer.latestDeliveryAddress',
+                'customer.addresses',
+                'table',
+                'waiter',
+                'kot.items.menuItem',
+                'branch.restaurant.currency',
+                'deliveryExecutive',
+                'payments',
+            ]);
 
         if ($executive) {
             $assignedCount = Order::where('delivery_executive_id', $executive->id)->count();
@@ -360,7 +370,17 @@ class PartnerAuthController extends Controller
 
     public function updateOrderStatus(Request $request, $orderId)
     {
-        $order = Order::find($orderId);
+        $order = Order::with([
+            'items',
+            'customer.latestDeliveryAddress',
+            'customer.addresses',
+            'table',
+            'waiter',
+            'kot.items.menuItem',
+            'branch.restaurant.currency',
+            'deliveryExecutive',
+            'payments',
+        ])->find($orderId);
         if (!$order) {
             return response()->json(['status' => false, 'message' => 'Order not found'], 404);
         }

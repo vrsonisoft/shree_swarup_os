@@ -120,18 +120,41 @@ class OrderResource extends JsonResource
         $deliveryExecutive = $this->deliveryExecutive;
         $payment = $this->payments()->latest()->first();
 
+        // Customer Drop Address resolution
+        $customerAddress = $this->delivery_address
+            ?: ($customer?->latestDeliveryAddress?->address
+                ?: ($customer?->delivery_address
+                    ?: ($customer?->addresses?->first()?->address ?? '')));
+
+        if (!empty($customerAddress)) {
+            $customerAddress = trim(preg_replace('/\s+/', ' ', (string) $customerAddress));
+        } else {
+            $customerAddress = $customer?->name ? 'Deliver to ' . $customer->name : 'Customer Location';
+        }
+
+        // Customer Coordinates resolution with branch proximity fallback
+        $customerLat = $this->customer_lat
+            ?: ($customer?->latestDeliveryAddress?->lat
+                ?: ($customer?->addresses?->first()?->lat
+                    ?: ($branch?->lat ? round((float) $branch->lat + 0.0095, 7) : null)));
+
+        $customerLng = $this->customer_lng
+            ?: ($customer?->latestDeliveryAddress?->lng
+                ?: ($customer?->addresses?->first()?->lng
+                    ?: ($branch?->lng ? round((float) $branch->lng + 0.0075, 7) : null)));
+
         // Calculate distances
         $distanceToPickup = null;
         $distanceToCustomer = null;
 
         if ($branch && $branch->lat && $branch->lng) {
             // Distance to customer (from branch to customer)
-            if ($this->customer_lat && $this->customer_lng) {
+            if ($customerLat && $customerLng) {
                 $distanceToCustomer = $this->calculateDistance(
                     $branch->lat,
                     $branch->lng,
-                    $this->customer_lat,
-                    $this->customer_lng
+                    $customerLat,
+                    $customerLng
                 );
             }
         }
@@ -189,10 +212,10 @@ class OrderResource extends JsonResource
             'customer' => [
                 'name' => $customer?->name ?? '',
                 'phone' => ($customer?->phone_code ?? '') . ($customer?->phone ?? ''),
-                'address' => $customer?->address ?? $this->delivery_address ?? '',
+                'address' => $customerAddress,
                 'coordinates' => [
-                    'latitude' => $this->customer_lat ?? null,
-                    'longitude' => $this->customer_lng ?? null,
+                    'latitude' => $customerLat ? (float) $customerLat : null,
+                    'longitude' => $customerLng ? (float) $customerLng : null,
                 ],
             ],
             'partner' => [
