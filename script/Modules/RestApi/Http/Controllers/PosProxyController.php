@@ -193,7 +193,7 @@ class PosProxyController extends Controller
         }
 
         try {
-            $menuItems = cache()->remember('menu_items_v4_' . $this->branch->id, 60, function () {
+            $menuItems = cache()->remember('menu_items_v6_' . $this->branch->id, 60, function () {
                 $items = $this->menuItemsQuery()
                     ->where('branch_id', $this->branch->id)
                     ->get();
@@ -271,7 +271,7 @@ class PosProxyController extends Controller
         return response()->json($item);
     }
 
-    public function getMenuItemVariations($itemId)
+    public function getMenuItemVariations($itemId, Request $request = null)
     {
         if ($resp = $this->guardBranch()) {
             return $resp;
@@ -281,10 +281,57 @@ class PosProxyController extends Controller
             return response()->json([]);
         }
 
-        $item = $this->menuItemsQuery()
-            ->where('branch_id', $this->branch->id)
-            ->findOrFail($itemId);
-        return response()->json($item->variations()->get());
+        $orderType = $request?->query('order_type');
+        $orderTypeId = $request?->query('order_type_id');
+
+        if (! $orderTypeId && $orderType && Schema::hasTable('order_types')) {
+            $normalizedSlug = strtolower(str_replace(' ', '_', $orderType));
+            if ($normalizedSlug === 'takeaway') {
+                $normalizedSlug = 'pickup';
+            }
+            $orderTypeId = DB::table('order_types')
+                ->where('branch_id', $this->branch->id)
+                ->where(function ($q) use ($orderType, $normalizedSlug) {
+                    $q->where('slug', $normalizedSlug)
+                      ->orWhere('slug', strtolower(str_replace(' ', '_', $orderType)))
+                      ->orWhere('order_type_name', $orderType)
+                      ->orWhere('type', $normalizedSlug);
+                })
+                ->value('id');
+
+            if (! $orderTypeId) {
+                $orderTypeId = DB::table('order_types')
+                    ->where(function ($q) use ($orderType, $normalizedSlug) {
+                        $q->where('slug', $normalizedSlug)
+                          ->orWhere('slug', strtolower(str_replace(' ', '_', $orderType)))
+                          ->orWhere('order_type_name', $orderType)
+                          ->orWhere('type', $normalizedSlug);
+                    })
+                    ->value('id');
+            }
+        }
+
+        $query = MenuItemVariation::where('menu_item_id', $itemId);
+        if (Schema::hasTable('menu_item_prices')) {
+            $query->with(['prices' => function ($q) {
+                $q->where('status', true);
+                if (Schema::hasTable('order_types')) {
+                    $q->with('orderType:id,order_type_name,slug');
+                }
+            }]);
+        }
+
+        $variations = $query->get();
+
+        if ($orderTypeId) {
+            foreach ($variations as $var) {
+                if (method_exists($var, 'setPriceContext')) {
+                    $var->setPriceContext((int) $orderTypeId);
+                }
+            }
+        }
+
+        return response()->json($variations);
     }
 
     public function getMenuItemModifierGroups($itemId, Request $request = null)
@@ -659,11 +706,17 @@ class PosProxyController extends Controller
         if (Schema::hasTable('menu_item_prices')) {
             $with[] = 'prices:id,menu_item_id,order_type_id,final_price';
             if (Schema::hasTable('order_types')) {
-                $with[] = 'prices.orderType:id,order_type_name';
+                $with[] = 'prices.orderType:id,order_type_name,slug';
             }
         }
         if (Schema::hasTable('menu_item_variations')) {
             $with[] = 'variations';
+            if (Schema::hasTable('menu_item_prices')) {
+                $with[] = 'variations.prices:id,menu_item_variation_id,order_type_id,final_price';
+                if (Schema::hasTable('order_types')) {
+                    $with[] = 'variations.prices.orderType:id,order_type_name,slug';
+                }
+            }
         }
         if (Schema::hasTable('modifier_groups') && Schema::hasTable('item_modifiers')) {
             if (Schema::hasTable('modifier_options')) {
@@ -1563,41 +1616,56 @@ class PosProxyController extends Controller
 
             $orderTypeNameFinal = $orderTypeName ?? $orderTypeDisplay;
 
-            $orderData = [
-                'order_number' => $orderNumberData['order_number'],
-                'formatted_order_number' => $orderNumberData['formatted_order_number'],
-                'branch_id' => $this->branch->id,
-                'table_id' => $tableId,
-                'date_time' => now(),
-                'customer_address_id' => $customerAddressId,
-                'number_of_pax' => $pax,
-                'discount_type' => $discountType,
-                'discount_value' => $discountValue,
-                'discount_amount' => $discountAmount,
-                'waiter_id' => $waiterId,
-                'sub_total' => $subTotal,
-                'total_tax_amount' => $taxTotal,
-                'total' => $total,
-                'order_type' => $orderTypeSlug ?? $normalizedOrderType,
-                'order_type_id' => $orderTypeId,
-                'custom_order_type_name' => $orderTypeNameFinal,
-                'delivery_fee' => $deliveryFee,
-                'delivery_address' => $deliveryAddress,
-                'delivery_time' => $deliveryTime,
-                'delivery_executive_id' => $deliveryExecutiveId,
-                'delivery_app_id' => $deliveryAppId,
-                'status' => $status,
-                'order_status' => $orderStatus,
-                'placed_via' => $placedVia,
-                'tax_mode' => 'order',
-                'customer_id' => $customerId,
-            ];
+            $orderId = $data['order_id'] ?? null;
+            $existingOrder = $orderId ? Order::where('branch_id', $this->branch->id)->where('id', $orderId)->first() : null;
 
-            if (Schema::hasColumn('orders', 'pos_machine_id')) {
-                $orderData['pos_machine_id'] = $posMachineId;
+            if ($existingOrder) {
+                $order = $existingOrder;
+                $order->sub_total = (float) $order->sub_total + (float) $subTotal;
+                $order->total_tax_amount = (float) $order->total_tax_amount + (float) $taxTotal;
+                $order->total = (float) $order->total + (float) $total;
+                if ($status === 'kot') {
+                    $order->status = 'kot';
+                    $order->order_status = 'confirmed';
+                }
+                $order->save();
+            } else {
+                $orderData = [
+                    'order_number' => $orderNumberData['order_number'],
+                    'formatted_order_number' => $orderNumberData['formatted_order_number'],
+                    'branch_id' => $this->branch->id,
+                    'table_id' => $tableId,
+                    'date_time' => now(),
+                    'customer_address_id' => $customerAddressId,
+                    'number_of_pax' => $pax,
+                    'discount_type' => $discountType,
+                    'discount_value' => $discountValue,
+                    'discount_amount' => $discountAmount,
+                    'waiter_id' => $waiterId,
+                    'sub_total' => $subTotal,
+                    'total_tax_amount' => $taxTotal,
+                    'total' => $total,
+                    'order_type' => $orderTypeSlug ?? $normalizedOrderType,
+                    'order_type_id' => $orderTypeId,
+                    'custom_order_type_name' => $orderTypeNameFinal,
+                    'delivery_fee' => $deliveryFee,
+                    'delivery_address' => $deliveryAddress,
+                    'delivery_time' => $deliveryTime,
+                    'delivery_executive_id' => $deliveryExecutiveId,
+                    'delivery_app_id' => $deliveryAppId,
+                    'status' => $status,
+                    'order_status' => $orderStatus,
+                    'placed_via' => $placedVia,
+                    'tax_mode' => 'order',
+                    'customer_id' => $customerId,
+                ];
+
+                if (Schema::hasColumn('orders', 'pos_machine_id')) {
+                    $orderData['pos_machine_id'] = $posMachineId;
+                }
+
+                $order = Order::create($orderData);
             }
-
-            $order = Order::create($orderData);
 
             $user = Auth::user();
             if ($status === 'billed' && $user) {
@@ -1738,10 +1806,13 @@ class PosProxyController extends Controller
                     }
                 }
 
+                $varName = $createdItem->menuItemVariation?->variation ?? $createdItem->menuItemVariation?->name ?? null;
                 $orderItemsDisplay->push([
                     'id' => $createdItem->id,
                     'menu_item_id' => $menuItem->id,
                     'name' => $menuItem->item_name ?? $menuItem->name ?? 'Unknown Item',
+                    'variation' => $varName,
+                    'variation_name' => $varName,
                     'quantity' => $qty,
                     'price' => $price,
                     'amount' => $amount,
@@ -1814,13 +1885,28 @@ class PosProxyController extends Controller
 
             if ($status === 'kot' && $kot) {
                 foreach ($orderItems as $orderItem) {
-                    \App\Models\KotItem::create([
+                    $kotItem = \App\Models\KotItem::create([
                         'kot_id' => $kot->id,
                         'order_item_id' => $orderItem->id,
                         'menu_item_id' => $orderItem->menu_item_id,
                         'menu_item_variation_id' => $orderItem->menu_item_variation_id,
                         'quantity' => $orderItem->quantity,
+                        'note' => $orderItem->note,
                     ]);
+
+                    if (Schema::hasTable('kot_item_modifier_options') && Schema::hasTable('order_item_modifier_options')) {
+                        $oiModifiers = DB::table('order_item_modifier_options')
+                            ->where('order_item_id', $orderItem->id)
+                            ->pluck('modifier_option_id');
+                        foreach ($oiModifiers as $modOptId) {
+                            DB::table('kot_item_modifier_options')->insert([
+                                'kot_item_id' => $kotItem->id,
+                                'modifier_option_id' => $modOptId,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
+                    }
                 }
             }
 
@@ -2280,11 +2366,13 @@ class PosProxyController extends Controller
 
                 $itemsByOrder = DB::table('order_items')
                     ->leftJoin('menu_items', 'order_items.menu_item_id', '=', 'menu_items.id')
+                    ->leftJoin('menu_item_variations', 'order_items.menu_item_variation_id', '=', 'menu_item_variations.id')
                     ->whereIn('order_items.order_id', $orderIds)
                     ->select(
                         'order_items.*',
                         'order_items.order_id',
-                        $menuItemNameExpr
+                        $menuItemNameExpr,
+                        'menu_item_variations.variation as variation_name'
                     )
                     ->when($menuPriceColumn, function ($q) use ($menuPriceColumn) {
                         $q->addSelect(DB::raw("menu_items.{$menuPriceColumn} as menu_item_price"));
@@ -2334,6 +2422,7 @@ class PosProxyController extends Controller
                             'order_id' => $item->order_id,
                             'menu_item_id' => $item->menu_item_id,
                             'name' => $item->menu_item_name ?? 'Unknown Item',
+                            'variation' => $item->variation_name ?? $item->variation ?? null,
                             'quantity' => $item->quantity,
                             'price' => $item->price !== null ? (float) $item->price : ($item->menu_item_price ?? null),
                             'amount' => $item->amount !== null ? (float) $item->amount : ($hasTotalCol && $item->total !== null ? (float) $item->total : null),
@@ -2398,15 +2487,28 @@ class PosProxyController extends Controller
             // Fallback to kot_items if still missing
             $ordersMissingItems = collect($orderIds)->diff($itemsByOrder->keys())->values();
             if ($ordersMissingItems->isNotEmpty() && Schema::hasTable('kot_items')) {
-                $kotItems = DB::table('kot_items')
+                $kotQuery = DB::table('kot_items')
                     ->leftJoin('kots', 'kot_items.kot_id', '=', 'kots.id')
-                    ->leftJoin('menu_items', 'kot_items.menu_item_id', '=', 'menu_items.id')
-                    ->whereIn('kots.order_id', $ordersMissingItems)
-                    ->select(
+                    ->leftJoin('menu_items', 'kot_items.menu_item_id', '=', 'menu_items.id');
+
+                if (Schema::hasTable('menu_item_variations')) {
+                    $kotQuery->leftJoin('menu_item_variations', 'kot_items.menu_item_variation_id', '=', 'menu_item_variations.id')
+                        ->select(
+                            'kot_items.*',
+                            'kots.order_id',
+                            $this->menuItemNameExpr(),
+                            'menu_item_variations.variation as variation_name'
+                        );
+                } else {
+                    $kotQuery->select(
                         'kot_items.*',
                         'kots.order_id',
                         $this->menuItemNameExpr()
-                    )
+                    );
+                }
+
+                $kotItems = $kotQuery
+                    ->whereIn('kots.order_id', $ordersMissingItems)
                     ->get()
                     ->map(function ($item) use ($menuPriceColumn) {
                         $unitPrice = null;
@@ -2419,11 +2521,12 @@ class PosProxyController extends Controller
                             'order_id' => $item->order_id,
                             'menu_item_id' => $item->menu_item_id,
                             'name' => $item->menu_item_name ?? 'Unknown Item',
+                            'variation' => $item->variation_name ?? $item->variation ?? null,
                             'quantity' => $item->quantity,
                             'price' => $unitPrice,
                             'amount' => $amount,
                             'tax_amount' => null,
-                            'note' => null,
+                            'note' => $item->note ?? null,
                             'modifiers_total' => null,
                             'modifiers' => null,
                         ];
@@ -2616,9 +2719,10 @@ class PosProxyController extends Controller
                 $taxTotalValue = $row->total_tax_amount !== null ? (float) $row->total_tax_amount : $taxTotal;
 
                 $base = collect((array) $row)->toArray();
-                $base['status'] = $row->order_status ?? $row->status;
+                $base['status'] = $row->status ?? $row->order_status;
                 $base['order_status'] = $row->order_status ?? $row->status;
-                $base['items'] = $items;
+                $itemsList = $items instanceof \Illuminate\Support\Collection ? $items->values()->all() : (is_array($items) ? array_values($items) : $items);
+                $base['items'] = $itemsList;
                 $base['charges'] = $charges;
                 $base['taxes'] = $taxes;
                 $base['customer'] = $customerMap->get($row->customer_id);
@@ -2626,7 +2730,7 @@ class PosProxyController extends Controller
                 $base['delivery_executive'] = $deliveryExecMap->get($row->delivery_executive_id);
                 $base['order_type_meta'] = $orderTypeMap->get($row->order_type_id);
                 $base['cart'] = [
-                    'items' => $items,
+                    'items' => $itemsList,
                     'charges' => $charges,
                     'taxes' => $taxes,
                     'summary' => [
@@ -2733,10 +2837,12 @@ class PosProxyController extends Controller
 
                     $query = DB::table('order_items')
                         ->leftJoin('menu_items', 'order_items.menu_item_id', '=', 'menu_items.id')
+                        ->leftJoin('menu_item_variations', 'order_items.menu_item_variation_id', '=', 'menu_item_variations.id')
                         ->where('order_items.order_id', $id)
                         ->select(
                             'order_items.*',
-                            $this->menuItemNameExpr()
+                            $this->menuItemNameExpr(),
+                            'menu_item_variations.variation as variation_name'
                         );
 
                     if ($menuPriceColumn) {
@@ -2786,6 +2892,7 @@ class PosProxyController extends Controller
                                 'id' => $item->id,
                                 'menu_item_id' => $item->menu_item_id,
                                 'name' => $item->menu_item_name ?? 'Unknown Item',
+                                'variation' => $item->variation_name ?? $item->variation ?? null,
                                 'quantity' => $item->quantity,
                                 'price' => $item->price !== null ? (float) $item->price : ($item->menu_item_price ?? null),
                                 'amount' => $item->amount !== null ? (float) $item->amount : ($hasTotalCol && $item->total !== null ? (float) $item->total : null),
@@ -2794,15 +2901,17 @@ class PosProxyController extends Controller
                                 'modifiers_total' => $modifiersTotal > 0 ? $modifiersTotal : ($hasModifiersTotal && $item->modifiers_total !== null ? (float) $item->modifiers_total : null),
                                 'modifiers' => $modifiers,
                             ];
-                        });
+                        })
+                        ->values()
+                        ->all();
                 } catch (\Throwable $e) {
                     Log::warning('Order items fallback failed', ['order_id' => $id, 'message' => $e->getMessage()]);
                     $items = collect();
                 }
             }
-            // Fallback to KOT items if order_items are empty but KOT exists
             // Fallback to split_order_items if present
-            if ($items->isEmpty() && Schema::hasTable('split_order_items')) {
+            $hasItems = is_array($items) ? !empty($items) : ($items instanceof \Illuminate\Support\Collection ? $items->isNotEmpty() : !empty($items));
+            if (! $hasItems && Schema::hasTable('split_order_items')) {
                 try {
                     $items = DB::table('split_order_items')
                         ->leftJoin('order_items', 'split_order_items.order_item_id', '=', 'order_items.id')
@@ -2838,22 +2947,27 @@ class PosProxyController extends Controller
                                 'modifiers_total' => null,
                                 'modifiers' => null,
                             ];
-                        });
+                        })
+                        ->values()
+                        ->all();
                 } catch (\Throwable $e) {
                     Log::warning('Order split items fallback failed', ['order_id' => $id, 'message' => $e->getMessage()]);
                 }
             }
 
-            if ($items->isEmpty() && Schema::hasTable('kot_items')) {
+            $hasItems = is_array($items) ? !empty($items) : ($items instanceof \Illuminate\Support\Collection ? $items->isNotEmpty() : !empty($items));
+            if (! $hasItems && Schema::hasTable('kot_items')) {
                 try {
                     $items = DB::table('kot_items')
-                    ->leftJoin('kots', 'kot_items.kot_id', '=', 'kots.id')
-                    ->leftJoin('menu_items', 'kot_items.menu_item_id', '=', 'menu_items.id')
-                    ->where('kots.order_id', $id)
-                    ->select(
-                        'kot_items.*',
-                        $this->menuItemNameExpr()
-                    )
+                        ->leftJoin('kots', 'kot_items.kot_id', '=', 'kots.id')
+                        ->leftJoin('menu_items', 'kot_items.menu_item_id', '=', 'menu_items.id')
+                        ->leftJoin('menu_item_variations', 'kot_items.menu_item_variation_id', '=', 'menu_item_variations.id')
+                        ->where('kots.order_id', $id)
+                        ->select(
+                            'kot_items.*',
+                            $this->menuItemNameExpr(),
+                            'menu_item_variations.variation as variation_name'
+                        )
                         ->get()
                         ->map(function ($item) use ($menuPriceColumn) {
                             $unitPrice = null;
@@ -2865,15 +2979,18 @@ class PosProxyController extends Controller
                                 'id' => $item->id,
                                 'menu_item_id' => $item->menu_item_id,
                                 'name' => $item->menu_item_name ?? 'Unknown Item',
+                                'variation' => $item->variation_name ?? $item->variation ?? null,
                                 'quantity' => $item->quantity,
                                 'price' => $unitPrice,
                                 'amount' => $amount,
                                 'tax_amount' => null,
-                                'note' => null,
+                                'note' => $item->note ?? null,
                                 'modifiers_total' => null,
                                 'modifiers' => null,
                             ];
-                        });
+                        })
+                        ->values()
+                        ->all();
                 } catch (\Throwable $e) {
                     Log::warning('Order KOT fallback failed', ['order_id' => $id, 'message' => $e->getMessage()]);
                 }
@@ -3061,7 +3178,7 @@ class PosProxyController extends Controller
                     'amount_paid' => $row->amount_paid !== null ? (float) $row->amount_paid : null,
                 ],
                 'order' => $row,
-                'items' => $items,
+                'items' => is_array($items) ? array_values($items) : (method_exists($items, 'values') ? $items->values()->all() : $items),
                 'charges' => $charges,
                 'taxes' => $taxes,
                 'customer' => $customer,
@@ -3069,7 +3186,7 @@ class PosProxyController extends Controller
                 'delivery_executive' => $deliveryExecutive,
                 'order_type_meta' => $orderType,
                 'cart' => [
-                    'items' => $items,
+                    'items' => is_array($items) ? array_values($items) : (method_exists($items, 'values') ? $items->values()->all() : $items),
                     'charges' => $charges,
                     'taxes' => $taxes,
                     'summary' => [
@@ -3230,6 +3347,38 @@ class PosProxyController extends Controller
                         }
                     }
                 }
+            }
+
+            // Sync KOTs and items when order transitions to served, completed, delivered or cancelled
+            if (in_array($incomingStatus, ['served', 'completed', 'delivered'])) {
+                $orderModel = Order::find($id);
+                if ($orderModel && $orderModel->delivery_executive_id) {
+                    $executive = \App\Models\DeliveryExecutive::find($orderModel->delivery_executive_id);
+                    if ($executive) {
+                        $executive->status = 'available';
+                        $executive->save();
+                    }
+                    if (Schema::hasColumn('orders', 'delivery_status')) {
+                        DB::table('orders')->where('id', $id)->update(['delivery_status' => 'delivered']);
+                    }
+                }
+                \App\Models\Kot::where('order_id', $id)->where('status', '!=', 'cancelled')->update(['status' => 'served']);
+                \App\Models\KotItem::whereHas('kot', function ($q) use ($id) {
+                    $q->where('order_id', $id);
+                })->where('status', '!=', 'cancelled')->update(['status' => 'served']);
+            } elseif (in_array($incomingStatus, ['cancelled', 'canceled'])) {
+                $orderModel = Order::find($id);
+                if ($orderModel && $orderModel->delivery_executive_id) {
+                    $executive = \App\Models\DeliveryExecutive::find($orderModel->delivery_executive_id);
+                    if ($executive) {
+                        $executive->status = 'available';
+                        $executive->save();
+                    }
+                }
+                \App\Models\Kot::where('order_id', $id)->update(['status' => 'cancelled']);
+                \App\Models\KotItem::whereHas('kot', function ($q) use ($id) {
+                    $q->where('order_id', $id);
+                })->update(['status' => 'cancelled']);
             }
 
             return response()->json([
@@ -3562,8 +3711,10 @@ class PosProxyController extends Controller
             if (Schema::hasColumn('orders', 'order_status') && $orderStatusAcceptsPaid) {
                 $payload['order_status'] = 'paid';
             } elseif (Schema::hasColumn('orders', 'order_status')) {
-                // Fallback for delivery orders: use 'delivered', for dine-in: use 'served'
-                $fallbacks = ['delivered', 'served', 'completed'];
+                // For dine-in: use 'served', for delivery: use 'delivered'
+                $orderRow = DB::table('orders')->where('id', $id)->first();
+                $isDineIn = !empty($orderRow?->table_id) || ($orderRow?->order_type === 'dine_in');
+                $fallbacks = $isDineIn ? ['served', 'completed', 'paid'] : ['delivered', 'completed', 'paid'];
                 foreach ($fallbacks as $fallback) {
                     if (in_array($fallback, $allowedOrderStatuses, true)) {
                         $payload['order_status'] = $fallback;
@@ -3592,6 +3743,23 @@ class PosProxyController extends Controller
                     TableSession::where('table_id', $table->id)->delete();
                 }
             }
+
+            // When order is paid, mark all its KOTs and items as served and free rider if assigned
+            $orderModel = Order::find($id);
+            if ($orderModel && $orderModel->delivery_executive_id) {
+                $executive = \App\Models\DeliveryExecutive::find($orderModel->delivery_executive_id);
+                if ($executive) {
+                    $executive->status = 'available';
+                    $executive->save();
+                }
+                if (Schema::hasColumn('orders', 'delivery_status')) {
+                    DB::table('orders')->where('id', $id)->update(['delivery_status' => 'delivered']);
+                }
+            }
+            \App\Models\Kot::where('order_id', $id)->where('status', '!=', 'cancelled')->update(['status' => 'served']);
+            \App\Models\KotItem::whereHas('kot', function ($q) use ($id) {
+                $q->where('order_id', $id);
+            })->where('status', '!=', 'cancelled')->update(['status' => 'served']);
 
             return response()->json([
                 'success' => true,
@@ -3777,8 +3945,9 @@ class PosProxyController extends Controller
                         'note' => $item['note'] ?? null,
                     ];
 
-                    if (isset($item['variation_id']) && $item['variation_id']) {
-                        $orderItemData['menu_item_variation_id'] = $item['variation_id'];
+                    $varId = $item['variation_id'] ?? $item['menu_item_variation_id'] ?? null;
+                    if ($varId) {
+                        $orderItemData['menu_item_variation_id'] = $varId;
                     }
 
                     $orderItem = OrderItem::create($orderItemData);
@@ -3943,8 +4112,24 @@ class PosProxyController extends Controller
                     'kot_id' => $kot->id,
                     'order_item_id' => $orderItem->id,
                     'menu_item_id' => $orderItem->menu_item_id,
+                    'menu_item_variation_id' => $orderItem->menu_item_variation_id,
                     'quantity' => $orderItem->quantity,
+                    'note' => $orderItem->note,
                 ]);
+
+                if (Schema::hasTable('kot_item_modifier_options') && Schema::hasTable('order_item_modifier_options')) {
+                    $oiModifiers = DB::table('order_item_modifier_options')
+                        ->where('order_item_id', $orderItem->id)
+                        ->pluck('modifier_option_id');
+                    foreach ($oiModifiers as $modOptId) {
+                        DB::table('kot_item_modifier_options')->insert([
+                            'kot_item_id' => $kotItem->id,
+                            'modifier_option_id' => $modOptId,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
 
                 $kotItems[] = $kotItem->id;
             }
@@ -4018,6 +4203,13 @@ class PosProxyController extends Controller
                           $oq->whereNotIn('order_status', ['placed', 'draft']);
                       });
                 })
+                ->whereDoesntHave('order', function ($oq) {
+                    $oq->whereIn('order_status', ['served', 'completed', 'delivered'])
+                       ->where(function ($sq) {
+                           $sq->where('status', 'paid')
+                              ->orWhere('order_status', 'completed');
+                       });
+                })
                 ->orderByDesc('created_at');
 
             if ($status) {
@@ -4040,6 +4232,8 @@ class PosProxyController extends Controller
                     'order_number' => $kot->order->order_number ?? null,
                     'order_type' => $kot->orderType?->name ?? $kot->order?->order_type ?? null,
                     'order_status' => $kot->order?->order_status ?? null,
+                    'order_bill_status' => $kot->order?->status ?? null,
+                    'is_order_paid' => $kot->order ? ($kot->order->status === 'paid' || ($kot->order->amount_paid !== null && $kot->order->total !== null && (float)$kot->order->amount_paid >= (float)$kot->order->total - 0.01)) : false,
                     'table_name' => $kot->order?->table?->table_name ?? null,
                     'kitchen_place' => $kot->kotPlace?->name ?? null,
                     'kitchen_place_id' => $kot->kitchen_place_id,
@@ -4050,7 +4244,7 @@ class PosProxyController extends Controller
                             'id' => $item->id,
                             'menu_item_id' => $item->menu_item_id,
                             'name' => $item->menuItem?->item_name ?? $item->menuItem?->name ?? 'Unknown',
-                            'variation' => $item->menuItemVariation?->name ?? null,
+                            'variation' => $item->menuItemVariation?->variation ?? $item->menuItemVariation?->name ?? null,
                             'quantity' => $item->quantity,
                             'status' => $item->status,
                             'note' => $item->note,
@@ -4137,7 +4331,7 @@ class PosProxyController extends Controller
                         'menu_item_id' => $item->menu_item_id,
                         'name' => $item->menuItem?->item_name ?? $item->menuItem?->name ?? 'Unknown',
                         'variation_id' => $item->menu_item_variation_id,
-                        'variation' => $item->menuItemVariation?->name ?? null,
+                        'variation' => $item->menuItemVariation?->variation ?? $item->menuItemVariation?->name ?? null,
                         'quantity' => $item->quantity,
                         'status' => $item->status,
                         'note' => $item->note,
@@ -4226,10 +4420,10 @@ class PosProxyController extends Controller
                 ]);
             }
 
-            // When KOT is served, update item statuses to ready if not already
+            // When KOT is served, update item statuses to served if not already cancelled
             if ($newStatus === 'served') {
                 $kot->items()->whereNull('status')->orWhere('status', '!=', 'cancelled')->update([
-                    'status' => 'ready',
+                    'status' => 'served',
                 ]);
             }
 
@@ -4291,7 +4485,7 @@ class PosProxyController extends Controller
             $cancelReasonId = $request->input('cancel_reason_id');
             $cancelReasonText = $request->input('cancel_reason_text');
 
-            $validStatuses = ['pending', 'cooking', 'ready', 'cancelled'];
+            $validStatuses = ['pending', 'cooking', 'ready', 'served', 'cancelled'];
             if (!in_array($newStatus, $validStatuses)) {
                 return response()->json([
                     'success' => false,
@@ -4476,7 +4670,7 @@ class PosProxyController extends Controller
                             'id' => $item->id,
                             'menu_item_id' => $item->menu_item_id,
                             'name' => $item->menuItem?->item_name ?? $item->menuItem?->name ?? 'Unknown',
-                            'variation' => $item->menuItemVariation?->name ?? null,
+                            'variation' => $item->menuItemVariation?->variation ?? $item->menuItemVariation?->name ?? null,
                             'quantity' => $item->quantity,
                             'status' => $item->status,
                             'note' => $item->note,
@@ -5473,7 +5667,7 @@ class PosProxyController extends Controller
                 ], 404);
             }
 
-            $status = $request->input('status');
+            $status = $request->input('status') ?? $request->input('delivery_status');
             $validStatuses = ['preparing', 'ready_for_pickup', 'out_for_delivery', 'delivered', 'failed'];
 
             if (!in_array($status, $validStatuses)) {
@@ -5488,13 +5682,19 @@ class PosProxyController extends Controller
                 $order->order_status = $status;
             }
 
-            // If delivered, mark executive as available
-            if ($status === 'delivered' && $order->delivery_executive_id) {
-                $executive = \App\Models\DeliveryExecutive::find($order->delivery_executive_id);
-                if ($executive) {
-                    $executive->status = 'available';
-                    $executive->save();
+            // If delivered, mark executive as available and sync KOTs to served
+            if ($status === 'delivered') {
+                if ($order->delivery_executive_id) {
+                    $executive = \App\Models\DeliveryExecutive::find($order->delivery_executive_id);
+                    if ($executive) {
+                        $executive->status = 'available';
+                        $executive->save();
+                    }
                 }
+                \App\Models\Kot::where('order_id', $order->id)->where('status', '!=', 'cancelled')->update(['status' => 'served']);
+                \App\Models\KotItem::whereHas('kot', function ($q) use ($order) {
+                    $q->where('order_id', $order->id);
+                })->where('status', '!=', 'cancelled')->update(['status' => 'served']);
             }
 
             // If failed, also mark executive as available

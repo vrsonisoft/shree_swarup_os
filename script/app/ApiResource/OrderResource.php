@@ -192,6 +192,8 @@ class OrderResource extends JsonResource
                 return [
                     'name' => $item->menuItem?->item_name ?? $item->menuItem?->name ?? 'Unknown Item',
                     'quantity' => $item->quantity ?? 1,
+                    'variation' => $item->menuItemVariation?->variation ?? $item->menuItemVariation?->name ?? null,
+                    'variation_name' => $item->menuItemVariation?->variation ?? $item->menuItemVariation?->name ?? null,
                 ];
             })->toArray();
         } elseif ($this->kot && $this->kot->count() > 0) {
@@ -204,6 +206,8 @@ class OrderResource extends JsonResource
                             $items[] = [
                                 'name' => $menuItem->item_name ?? $menuItem->name ?? 'Unknown Item',
                                 'quantity' => $kotItem->quantity ?? 1,
+                                'variation' => $kotItem->menuItemVariation?->variation ?? $kotItem->menuItemVariation?->name ?? null,
+                                'variation_name' => $kotItem->menuItemVariation?->variation ?? $kotItem->menuItemVariation?->name ?? null,
                             ];
                         }
                     }

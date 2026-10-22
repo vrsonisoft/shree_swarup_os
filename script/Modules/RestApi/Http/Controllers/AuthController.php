@@ -56,6 +56,12 @@ class AuthController extends Controller
 
     protected function transformUser(User $user): array
     {
+        $restaurant = $user->restaurant_id ? \App\Models\Restaurant::with('currency')->find($user->restaurant_id) : null;
+        if (! $restaurant) {
+            $restaurant = \App\Models\Restaurant::with('currency')->first();
+        }
+        $currency = $restaurant?->currency;
+
         return [
             'id' => $user->id,
             'name' => $user->name,
@@ -63,6 +69,14 @@ class AuthController extends Controller
             'restaurant_id' => $user->restaurant_id,
             'branch_id' => $user->branch_id,
             'roles' => $user->roles->pluck('name'),
+            'currency_symbol' => $currency?->currency_symbol ?? '₹',
+            'currency_code' => $currency?->currency_code ?? 'INR',
+            'restaurant' => $restaurant ? [
+                'id' => $restaurant->id,
+                'name' => $restaurant->name,
+                'currency_symbol' => $currency?->currency_symbol ?? '₹',
+                'currency_code' => $currency?->currency_code ?? 'INR',
+            ] : null,
         ];
     }
 }
