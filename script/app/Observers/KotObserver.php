@@ -100,9 +100,16 @@ class KotObserver
     {
         $orderType = $order->order_type;
 
+        $autoConfirm = false;
+        if (function_exists('restaurant') && restaurant()) {
+            $autoConfirm = (bool) (restaurant()->auto_confirm_orders ?? false);
+        } elseif ($order->branch?->restaurant) {
+            $autoConfirm = (bool) ($order->branch->restaurant->auto_confirm_orders ?? false);
+        }
+
         $pendingStatus = ($order->placed_via === 'pos')
             ? 'confirmed'
-            : (restaurant()->auto_confirm_orders ? 'confirmed' : 'placed');
+            : ($autoConfirm ? 'confirmed' : 'placed');
 
         $statusPriority = [
             'pending_confirmation' => 1,

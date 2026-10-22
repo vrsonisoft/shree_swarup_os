@@ -44,9 +44,16 @@ class KotItemObserver
             $order->updateQuietly(['order_status' => 'preparing']);
         } elseif (!$hasAnyCookingItem && $currentOrderStatus === 'preparing') {
             // No items are cooking anymore, revert to previous status
+            $autoConfirm = false;
+            if (function_exists('restaurant') && restaurant()) {
+                $autoConfirm = (bool) (restaurant()->auto_confirm_orders ?? false);
+            } elseif ($order->branch?->restaurant) {
+                $autoConfirm = (bool) ($order->branch->restaurant->auto_confirm_orders ?? false);
+            }
+
             $pendingStatus = ($order->placed_via === 'pos')
                 ? 'confirmed'
-                : (restaurant()->auto_confirm_orders ? 'confirmed' : 'placed');
+                : ($autoConfirm ? 'confirmed' : 'placed');
             
             $order->updateQuietly(['order_status' => $pendingStatus]);
         }

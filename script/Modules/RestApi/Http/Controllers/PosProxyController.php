@@ -24,6 +24,7 @@ use App\Models\Tax;
 use App\Models\User;
 use App\Models\DeliveryExecutive;
 use App\Enums\OrderStatus;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1206,21 +1207,14 @@ class PosProxyController extends Controller
         }
 
         $reservations = Reservation::where('branch_id', $this->branch->id)
-            ->whereDate('reservation_date_time', today())
+            ->where(function ($q) {
+                $q->whereDate('reservation_date_time', today())
+                  ->orWhereIn('reservation_status', ['Checked_In', 'checked_in', 'seated']);
+            })
             ->whereNotNull('table_id')
-            ->with('table')
-            ->get()
-            ->map(function ($reservation) {
-                return [
-                    'id' => $reservation->id,
-                    'table_code' => $reservation->table ? $reservation->table->table_code : 'N/A',
-                    'time' => $reservation->reservation_date_time->translatedFormat('h:i A'),
-                    'datetime' => $reservation->reservation_date_time->format('M d, Y h:i A'),
-                    'date' => $reservation->reservation_date_time->format('M d, Y'),
-                    'party_size' => $reservation->party_size,
-                    'status' => $reservation->reservation_status,
-                ];
-            });
+            ->with(['table', 'customer'])
+            ->orderByDesc('reservation_date_time')
+            ->get();
 
         return response()->json($reservations);
     }
@@ -1849,11 +1843,22 @@ class PosProxyController extends Controller
                             continue;
                         }
 
+                        $modName = $this->resolveTranslatableName($mod['name'] ?? null);
+                        if (empty($modName) && Schema::hasTable('modifier_options')) {
+                            $moRaw = DB::table('modifier_options')->where('id', $modifierId)->value('name');
+                            $modName = $this->resolveTranslatableName($moRaw);
+                        }
+
+                        $modPrice = isset($mod['price']) ? (float) $mod['price'] : null;
+                        if ($modPrice === null && Schema::hasTable('modifier_options')) {
+                            $modPrice = (float) (DB::table('modifier_options')->where('id', $modifierId)->value('price') ?? 0);
+                        }
+
                         DB::table('order_item_modifier_options')->insert([
                             'order_item_id' => $createdItem->id,
                             'modifier_option_id' => $modifierId,
-                            'modifier_option_name' => $mod['name'] ?? null,
-                            'modifier_option_price' => isset($mod['price']) ? (float) $mod['price'] : null,
+                            'modifier_option_name' => $modName ?: null,
+                            'modifier_option_price' => $modPrice,
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
@@ -2445,8 +2450,21 @@ class PosProxyController extends Controller
                 $modifiersByItemId = collect();
                 if ($hasModifierOptionsTable && $itemsByOrder->isNotEmpty()) {
                     $itemIds = $itemsByOrder->pluck('id')->unique()->values()->all();
-                    $modifiersByItemId = DB::table('order_item_modifier_options')
-                        ->whereIn('order_item_id', $itemIds)
+                    $modQuery = DB::table('order_item_modifier_options as oimo');
+                    if (Schema::hasTable('modifier_options')) {
+                        $modQuery->leftJoin('modifier_options as mo', 'oimo.modifier_option_id', '=', 'mo.id')
+                            ->select([
+                                'oimo.order_item_id',
+                                'oimo.modifier_option_id',
+                                'oimo.modifier_option_name',
+                                'oimo.modifier_option_price',
+                                'mo.name as mo_name',
+                                'mo.price as mo_price',
+                            ]);
+                    } else {
+                        $modQuery->select('oimo.*');
+                    }
+                    $modifiersByItemId = $modQuery->whereIn('oimo.order_item_id', $itemIds)
                         ->get()
                         ->groupBy('order_item_id');
                 }
@@ -2457,17 +2475,33 @@ class PosProxyController extends Controller
                         $modifiers = null;
                         if ($modifiersByItemId->has($item->id)) {
                             $modifiers = $modifiersByItemId->get($item->id)->map(function ($mod) {
+                                $rawName = !empty($mod->modifier_option_name) ? $mod->modifier_option_name : ($mod->mo_name ?? '');
+                                $cleanName = $this->resolveTranslatableName($rawName);
+                                $price = $mod->modifier_option_price !== null
+                                    ? (float) $mod->modifier_option_price
+                                    : (isset($mod->mo_price) ? (float) $mod->mo_price : 0);
                                 return [
                                     'id' => $mod->modifier_option_id,
-                                    'name' => $mod->modifier_option_name,
-                                    'price' => $mod->modifier_option_price !== null ? (float) $mod->modifier_option_price : 0,
+                                    'name' => $cleanName,
+                                    'price' => $price,
                                 ];
                             })->values()->all();
                         }
                         // Fallback to JSON column if no records in pivot table
                         if (empty($modifiers) && $hasModifiersCol && $item->modifiers) {
-                            $decoded = json_decode($item->modifiers, true);
-                            $modifiers = $decoded ?: $item->modifiers;
+                            $decoded = is_string($item->modifiers) ? json_decode($item->modifiers, true) : $item->modifiers;
+                            if (is_array($decoded)) {
+                                $modifiers = collect($decoded)->map(function ($m) {
+                                    if (is_array($m)) {
+                                        return [
+                                            'id' => $m['id'] ?? null,
+                                            'name' => $this->resolveTranslatableName($m['name'] ?? null),
+                                            'price' => isset($m['price']) ? (float) $m['price'] : 0,
+                                        ];
+                                    }
+                                    return ['id' => null, 'name' => (string) $m, 'price' => 0];
+                                })->values()->all();
+                            }
                         }
 
                         // Calculate modifiers total
@@ -2948,8 +2982,22 @@ class PosProxyController extends Controller
                     $hasModifierOptionsTable = Schema::hasTable('order_item_modifier_options');
                     $modifiersByItemId = collect();
                     if ($hasModifierOptionsTable) {
-                        $modifiersByItemId = DB::table('order_item_modifier_options')
-                            ->whereIn('order_item_id', function ($q) use ($id) {
+                        $singleModQuery = DB::table('order_item_modifier_options as oimo');
+                        if (Schema::hasTable('modifier_options')) {
+                            $singleModQuery->leftJoin('modifier_options as mo', 'oimo.modifier_option_id', '=', 'mo.id')
+                                ->select([
+                                    'oimo.order_item_id',
+                                    'oimo.modifier_option_id',
+                                    'oimo.modifier_option_name',
+                                    'oimo.modifier_option_price',
+                                    'mo.name as mo_name',
+                                    'mo.price as mo_price',
+                                ]);
+                        } else {
+                            $singleModQuery->select('oimo.*');
+                        }
+                        $modifiersByItemId = $singleModQuery
+                            ->whereIn('oimo.order_item_id', function ($q) use ($id) {
                                 $q->select('id')->from('order_items')->where('order_id', $id);
                             })
                             ->get()
@@ -2962,17 +3010,33 @@ class PosProxyController extends Controller
                             $modifiers = null;
                             if ($modifiersByItemId->has($item->id)) {
                                 $modifiers = $modifiersByItemId->get($item->id)->map(function ($mod) {
+                                    $rawName = !empty($mod->modifier_option_name) ? $mod->modifier_option_name : ($mod->mo_name ?? '');
+                                    $cleanName = $this->resolveTranslatableName($rawName);
+                                    $price = $mod->modifier_option_price !== null
+                                        ? (float) $mod->modifier_option_price
+                                        : (isset($mod->mo_price) ? (float) $mod->mo_price : 0);
                                     return [
                                         'id' => $mod->modifier_option_id,
-                                        'name' => $mod->modifier_option_name,
-                                        'price' => $mod->modifier_option_price !== null ? (float) $mod->modifier_option_price : 0,
+                                        'name' => $cleanName,
+                                        'price' => $price,
                                     ];
                                 })->values()->all();
                             }
                             // Fallback to JSON column if no records in pivot table
                             if (empty($modifiers) && $hasModifiersCol && $item->modifiers) {
-                                $decoded = json_decode($item->modifiers, true);
-                                $modifiers = $decoded ?: $item->modifiers;
+                                $decoded = is_string($item->modifiers) ? json_decode($item->modifiers, true) : $item->modifiers;
+                                if (is_array($decoded)) {
+                                    $modifiers = collect($decoded)->map(function ($m) {
+                                        if (is_array($m)) {
+                                            return [
+                                                'id' => $m['id'] ?? null,
+                                                'name' => $this->resolveTranslatableName($m['name'] ?? null),
+                                                'price' => isset($m['price']) ? (float) $m['price'] : 0,
+                                            ];
+                                        }
+                                        return ['id' => null, 'name' => (string) $m, 'price' => 0];
+                                    })->values()->all();
+                                }
                             }
 
                             // Calculate modifiers total
@@ -3917,11 +3981,26 @@ class PosProxyController extends Controller
 
         $status = $request->query('status');
 
-        $reservations = Reservation::where('branch_id', $this->branch->id)
-            ->when($status, fn($q) => $q->where('reservation_status', $status))
-            ->with('table')
-            ->orderByDesc('id')
-            ->paginate(20);
+        $query = Reservation::where('branch_id', $this->branch->id)
+            ->with(['table', 'customer'])
+            ->orderByDesc('reservation_date_time');
+
+        if ($status && $status !== 'all') {
+            $statusLower = strtolower($status);
+            if ($statusLower === 'today') {
+                $query->whereDate('reservation_date_time', today());
+            } elseif ($statusLower === 'seated') {
+                $query->whereIn('reservation_status', ['Checked_In', 'checked_in', 'seated']);
+            } else {
+                $query->where(function ($q) use ($status, $statusLower) {
+                    $q->where('reservation_status', $status)
+                        ->orWhere('reservation_status', ucfirst($statusLower))
+                        ->orWhere('reservation_status', $statusLower);
+                });
+            }
+        }
+
+        $reservations = $query->paginate(50);
 
         return response()->json($reservations);
     }
@@ -3931,25 +4010,98 @@ class PosProxyController extends Controller
         if ($resp = $this->guardBranch()) {
             return $resp;
         }
+
         $data = $request->validate([
             'table_id' => 'required|integer',
             'reservation_date_time' => 'required|date',
             'party_size' => 'required|integer|min:1',
             'name' => 'nullable|string',
             'phone' => 'nullable|string',
+            'slot_time_difference' => 'nullable|integer|min:15|max:1440',
+            'duration_hours' => 'nullable|integer|min:1|max:24',
         ]);
+
+        $tableId = (int) $data['table_id'];
+        $table = Table::where('branch_id', $this->branch->id)->find($tableId);
+        if (!$table) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selected table not found in this branch',
+            ], 404);
+        }
+
+        // Determine slot duration in minutes (default: 120 mins = 2 hours)
+        $durationMinutes = 120;
+        if (!empty($data['slot_time_difference'])) {
+            $durationMinutes = (int) $data['slot_time_difference'];
+        } elseif (!empty($data['duration_hours'])) {
+            $durationMinutes = (int) $data['duration_hours'] * 60;
+        }
+
+        $requestedStart = Carbon::parse($data['reservation_date_time']);
+        $requestedEnd = $requestedStart->copy()->addMinutes($durationMinutes);
+
+        // Check for conflicting reservations for this table
+        // Interval overlap condition: (requestedStart < existingEnd) AND (requestedEnd > existingStart)
+        $conflictingReservations = Reservation::where('branch_id', $this->branch->id)
+            ->where('table_id', $tableId)
+            ->whereIn('reservation_status', ['Pending', 'Confirmed', 'Checked_In', 'pending', 'confirmed', 'checked_in'])
+            ->whereDate('reservation_date_time', $requestedStart->toDateString())
+            ->get();
+
+        foreach ($conflictingReservations as $existing) {
+            $existingStart = Carbon::parse($existing->reservation_date_time);
+            $existingMinutes = (int) ($existing->slot_time_difference ?: 120);
+            if ($existingMinutes < 15) {
+                $existingMinutes = 120;
+            }
+            $existingEnd = $existingStart->copy()->addMinutes($existingMinutes);
+
+            // Overlap check
+            if ($requestedStart->lt($existingEnd) && $requestedEnd->gt($existingStart)) {
+                $conflictFrom = $existingStart->format('h:i A');
+                $conflictTo = $existingEnd->format('h:i A');
+                $guestName = $existing->name ?: ($existing->customer ? $existing->customer->name : 'another guest');
+                $tableCode = $table->table_code ?: ('Table #' . $tableId);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "Table {$tableCode} is already booked from {$conflictFrom} to {$conflictTo} for {$guestName}. Please choose another time or table.",
+                ], 422);
+            }
+        }
 
         $reservation = Reservation::create([
             'branch_id' => $this->branch->id,
-            'table_id' => $data['table_id'],
+            'table_id' => $tableId,
             'reservation_date_time' => $data['reservation_date_time'],
             'party_size' => $data['party_size'],
-            'reservation_status' => 'pending',
+            'reservation_status' => 'Pending',
             'name' => $data['name'] ?? null,
             'phone' => $data['phone'] ?? null,
+            'slot_time_difference' => $durationMinutes,
         ]);
 
-        return response()->json($reservation);
+        // If reservation is starting right now or in the next 30 minutes, mark table as reserved
+        $now = Carbon::now();
+        if ($requestedStart->lte($now->copy()->addMinutes(30)) && $requestedEnd->gte($now)) {
+            $table->update(['available_status' => 'reserved']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Table reservation booked successfully',
+            'id' => $reservation->id,
+            'table_id' => $reservation->table_id,
+            'reservation_date_time' => $reservation->reservation_date_time,
+            'party_size' => $reservation->party_size,
+            'reservation_status' => $reservation->reservation_status,
+            'slot_time_difference' => $reservation->slot_time_difference,
+            'name' => $reservation->name,
+            'phone' => $reservation->phone,
+            'table' => $table,
+            'data' => $reservation->load('table'),
+        ]);
     }
 
     public function updateReservationStatus(Request $request, $id)
@@ -3962,11 +4114,54 @@ class PosProxyController extends Controller
             'status' => 'required|string',
         ]);
 
+        $statusInput = strtolower(trim($data['status']));
+        $statusMap = [
+            'pending' => 'Pending',
+            'confirmed' => 'Confirmed',
+            'seated' => 'Checked_In',
+            'checked_in' => 'Checked_In',
+            'checked-in' => 'Checked_In',
+            'cancelled' => 'Cancelled',
+            'canceled' => 'Cancelled',
+            'no_show' => 'No_Show',
+            'noshow' => 'No_Show',
+        ];
+
+        $targetStatus = $statusMap[$statusInput] ?? ucfirst($statusInput);
+
         $reservation = Reservation::where('branch_id', $this->branch->id)->findOrFail($id);
-        $reservation->reservation_status = $data['status'];
+        $reservation->reservation_status = $targetStatus;
         $reservation->save();
 
-        return response()->json($reservation);
+        // If guest is seated (Checked_In), update table's available_status to running so table is occupied
+        if ($targetStatus === 'Checked_In' && $reservation->table_id) {
+            Table::where('id', $reservation->table_id)->update(['available_status' => 'running']);
+        }
+
+        // If reservation is cancelled or marked no-show, release table back to available if no other active reservation
+        if (in_array($targetStatus, ['Cancelled', 'No_Show']) && $reservation->table_id) {
+            $hasOtherActive = Reservation::where('branch_id', $this->branch->id)
+                ->where('table_id', $reservation->table_id)
+                ->where('id', '!=', $reservation->id)
+                ->whereIn('reservation_status', ['Pending', 'Confirmed', 'Checked_In'])
+                ->whereDate('reservation_date_time', today())
+                ->exists();
+
+            if (!$hasOtherActive) {
+                Table::where('id', $reservation->table_id)
+                    ->where('available_status', 'reserved')
+                    ->update(['available_status' => 'available']);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Reservation status updated to ' . $targetStatus,
+            'id' => $reservation->id,
+            'table_id' => $reservation->table_id,
+            'reservation_status' => $reservation->reservation_status,
+            'data' => $reservation->fresh()->load('table'),
+        ]);
     }
 
     private function resolvePosMachineId(?string $publicId, ?string $token, ?string $deviceId): ?int
@@ -4081,6 +4276,35 @@ class PosProxyController extends Controller
 
                     $orderItem = OrderItem::create($orderItemData);
                     $addedItems[] = $orderItem->id;
+
+                    // Insert modifiers into order_item_modifier_options table
+                    $itemModifiers = $item['modifiers'] ?? [];
+                    if (is_array($itemModifiers) && ! empty($itemModifiers) && Schema::hasTable('order_item_modifier_options')) {
+                        foreach ($itemModifiers as $mod) {
+                            $modifierId = $mod['id'] ?? null;
+                            if (!$modifierId) continue;
+
+                            $modName = $this->resolveTranslatableName($mod['name'] ?? null);
+                            if (empty($modName) && Schema::hasTable('modifier_options')) {
+                                $moRaw = DB::table('modifier_options')->where('id', $modifierId)->value('name');
+                                $modName = $this->resolveTranslatableName($moRaw);
+                            }
+
+                            $modPrice = isset($mod['price']) ? (float) $mod['price'] : null;
+                            if ($modPrice === null && Schema::hasTable('modifier_options')) {
+                                $modPrice = (float) (DB::table('modifier_options')->where('id', $modifierId)->value('price') ?? 0);
+                            }
+
+                            DB::table('order_item_modifier_options')->insert([
+                                'order_item_id' => $orderItem->id,
+                                'modifier_option_id' => $modifierId,
+                                'modifier_option_name' => $modName ?: null,
+                                'modifier_option_price' => $modPrice,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
+                    }
 
                 } elseif ($action === 'update') {
                     // Update existing item quantity
@@ -4388,10 +4612,13 @@ class PosProxyController extends Controller
                             'quantity' => $item->quantity,
                             'status' => $item->status,
                             'note' => $item->note,
-                            'modifiers' => $item->modifierOptions->map(fn($m) => [
-                                'id' => $m->id,
-                                'name' => $m->name,
-                            ])->values()->all(),
+                            'modifiers' => $item->modifierOptions->map(function ($m) {
+                                return [
+                                    'id' => $m->id,
+                                    'name' => $this->resolveTranslatableName($m->name),
+                                    'price' => isset($m->price) ? (float) $m->price : 0,
+                                ];
+                            })->values()->all(),
                         ];
                     })->values()->all(),
                     'items_count' => $kot->items->count(),
@@ -4486,10 +4713,13 @@ class PosProxyController extends Controller
                         'status' => $item->status,
                         'note' => $item->note,
                         'price' => $item->orderItem?->price ?? $item->menuItem?->price ?? 0,
-                        'modifiers' => $item->modifierOptions->map(fn($m) => [
-                            'id' => $m->id,
-                            'name' => $m->name,
-                        ])->values()->all(),
+                        'modifiers' => $item->modifierOptions->map(function ($m) {
+                            return [
+                                'id' => $m->id,
+                                'name' => $this->resolveTranslatableName($m->name),
+                                'price' => isset($m->price) ? (float) $m->price : 0,
+                            ];
+                        })->values()->all(),
                         'cancel_reason' => $item->cancelReason?->reason ?? $item->cancel_reason_text,
                         'cancelled_by' => $item->cancelledBy?->name ?? null,
                     ];
@@ -4572,7 +4802,9 @@ class PosProxyController extends Controller
 
             // When KOT is served, update item statuses to served if not already cancelled
             if ($newStatus === 'served') {
-                $kot->items()->whereNull('status')->orWhere('status', '!=', 'cancelled')->update([
+                $kot->items()->where(function ($q) {
+                    $q->whereNull('status')->orWhere('status', '!=', 'cancelled');
+                })->update([
                     'status' => 'served',
                 ]);
             }
@@ -4653,12 +4885,20 @@ class PosProxyController extends Controller
 
             $kotItem->save();
 
-            // Check if all items in KOT are ready
+            // Check if all items in KOT are ready or served
             $kot = $kotItem->kot;
-            $allReady = $kot->items()->where('status', '!=', 'cancelled')->where('status', '!=', 'ready')->count() === 0;
+            $allReady = $kot->items()->where('status', '!=', 'cancelled')->whereNotIn('status', ['ready', 'served'])->count() === 0;
 
             if ($allReady && $kot->status === 'in_kitchen') {
                 $kot->status = 'food_ready';
+                $kot->save();
+            }
+
+            // Check if all items in KOT are served
+            $allServed = $kot->items()->where('status', '!=', 'cancelled')->where('status', '!=', 'served')->count() === 0;
+
+            if ($allServed && in_array($kot->status, ['in_kitchen', 'food_ready'])) {
+                $kot->status = 'served';
                 $kot->save();
             }
 
@@ -4835,10 +5075,13 @@ class PosProxyController extends Controller
                             'quantity' => $item->quantity,
                             'status' => $item->status,
                             'note' => $item->note,
-                            'modifiers' => $item->modifierOptions->map(fn($m) => [
-                                'id' => $m->id,
-                                'name' => $m->name,
-                            ])->values()->all(),
+                            'modifiers' => $item->modifierOptions->map(function ($m) {
+                                return [
+                                    'id' => $m->id,
+                                    'name' => $this->resolveTranslatableName($m->name),
+                                    'price' => isset($m->price) ? (float) $m->price : 0,
+                                ];
+                            })->values()->all(),
                         ];
                     })->values()->all(),
                     'created_at' => $kot->created_at?->toIso8601String(),
@@ -5985,6 +6228,26 @@ class PosProxyController extends Controller
                 'message' => 'Failed to fetch delivery orders',
             ], 500);
         }
+    }
+
+    /**
+     * Helper to safely extract a clean string from Spatie Translatable or JSON localized name.
+     */
+    private function resolveTranslatableName($name): string
+    {
+        if (empty($name)) {
+            return '';
+        }
+        if (is_array($name)) {
+            return (string) ($name['en'] ?? reset($name) ?? '');
+        }
+        if (is_string($name) && str_starts_with(trim($name), '{')) {
+            $decoded = json_decode($name, true);
+            if (is_array($decoded)) {
+                return (string) ($decoded['en'] ?? reset($decoded) ?? $name);
+            }
+        }
+        return (string) $name;
     }
 }
 
