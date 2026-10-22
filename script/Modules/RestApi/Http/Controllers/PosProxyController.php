@@ -3327,7 +3327,7 @@ class PosProxyController extends Controller
                         'grand_total' => $grandTotal,
                     ],
                 ],
-                'notes' => $items->isEmpty() ? 'No line items found; using KOT/split fallbacks. If still empty, verify order_items/kot_items data in DB.' : null,
+                'notes' => (is_array($items) ? empty($items) : ($items instanceof \Illuminate\Support\Collection ? $items->isEmpty() : empty($items))) ? 'No line items found; using KOT/split fallbacks. If still empty, verify order_items/kot_items data in DB.' : null,
             ]);
         } catch (\Throwable $e) {
             Log::error('ApplicationIntegration getOrder failed', [
