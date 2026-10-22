@@ -189,11 +189,34 @@ class OrderResource extends JsonResource
         $items = [];
         if ($this->items && $this->items->count() > 0) {
             $items = $this->items->map(function ($item) {
+                $varName = $item->menuItemVariation?->variation ?? $item->menuItemVariation?->name ?? null;
+                if (empty($varName) && $item->menu_item_id) {
+                    // Check if kot items have variation for this order & menu item
+                    $kotVar = \Illuminate\Support\Facades\DB::table('kot_items')
+                        ->join('kots', 'kot_items.kot_id', '=', 'kots.id')
+                        ->leftJoin('menu_item_variations', 'kot_items.menu_item_variation_id', '=', 'menu_item_variations.id')
+                        ->where('kots.order_id', $item->order_id)
+                        ->where('kot_items.menu_item_id', $item->menu_item_id)
+                        ->whereNotNull('menu_item_variations.variation')
+                        ->value('menu_item_variations.variation');
+                    if ($kotVar) {
+                        $varName = $kotVar;
+                    }
+                }
+                if (empty($varName) && $item->menu_item_id && isset($item->price)) {
+                    $priceVar = \Illuminate\Support\Facades\DB::table('menu_item_variations')
+                        ->where('menu_item_id', $item->menu_item_id)
+                        ->where('price', (float) $item->price)
+                        ->value('variation');
+                    if ($priceVar) {
+                        $varName = $priceVar;
+                    }
+                }
                 return [
                     'name' => $item->menuItem?->item_name ?? $item->menuItem?->name ?? 'Unknown Item',
                     'quantity' => $item->quantity ?? 1,
-                    'variation' => $item->menuItemVariation?->variation ?? $item->menuItemVariation?->name ?? null,
-                    'variation_name' => $item->menuItemVariation?->variation ?? $item->menuItemVariation?->name ?? null,
+                    'variation' => $varName,
+                    'variation_name' => $varName,
                 ];
             })->toArray();
         } elseif ($this->kot && $this->kot->count() > 0) {

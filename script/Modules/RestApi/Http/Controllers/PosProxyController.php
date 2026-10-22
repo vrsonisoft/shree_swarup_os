@@ -1616,15 +1616,37 @@ class PosProxyController extends Controller
 
             $orderTypeNameFinal = $orderTypeName ?? $orderTypeDisplay;
 
-            $orderId = $data['order_id'] ?? null;
-            $existingOrder = $orderId ? Order::where('branch_id', $this->branch->id)->where('id', $orderId)->first() : null;
+            $orderId = $data['order_id'] ?? $data['existing_order_id'] ?? null;
+            $existingOrder = null;
+            if ($orderId) {
+                $existingOrder = Order::where('branch_id', $this->branch->id)->where('id', $orderId)->first()
+                    ?? Order::where('id', $orderId)->first();
+            }
 
-            if (! $existingOrder && $tableId && $normalizedOrderType === 'dine_in') {
+            if (! $existingOrder && $tableId) {
+                // Auto-bind to ANY active / unsettled order on this table (even if order_status is confirmed, kot, etc.)
                 $existingOrder = Order::where('branch_id', $this->branch->id)
                     ->where('table_id', $tableId)
-                    ->occupyingTableSeats()
+                    ->whereNotIn('status', ['paid', 'canceled'])
+                    ->where(function ($q) {
+                        $q->whereNull('order_status')
+                            ->orWhereNotIn('order_status', ['completed', 'cancelled']);
+                    })
                     ->orderByDesc('id')
                     ->first();
+
+                if (! $existingOrder) {
+                    $existingOrder = Order::where('branch_id', $this->branch->id)
+                        ->where('table_id', $tableId)
+                        ->occupyingTableSeats()
+                        ->orderByDesc('id')
+                        ->first();
+                }
+
+                if (! $existingOrder && class_exists(Table::class)) {
+                    $tableModel = Table::find($tableId);
+                    $existingOrder = $tableModel?->activeOrder;
+                }
             }
 
             if ($existingOrder) {
@@ -1733,6 +1755,30 @@ class PosProxyController extends Controller
 
                 $qty = max(1, (int) ($item['quantity'] ?? 1));
                 $variationId = $item['variation_id'] ?? $item['menu_item_variation_id'] ?? null;
+
+                // Fallback: If variation_id is null, resolve from variation name or price in menu_item_variations
+                if (! $variationId && Schema::hasTable('menu_item_variations')) {
+                    $vName = $item['variation'] ?? $item['variation_name'] ?? null;
+                    if (! empty($vName)) {
+                        $foundVar = DB::table('menu_item_variations')
+                            ->where('menu_item_id', $menuItem->id)
+                            ->where('variation', $vName)
+                            ->first();
+                        if ($foundVar) {
+                            $variationId = $foundVar->id;
+                        }
+                    }
+                    if (! $variationId && isset($item['price'])) {
+                        $pVal = (float) $item['price'];
+                        $foundVarByPrice = DB::table('menu_item_variations')
+                            ->where('menu_item_id', $menuItem->id)
+                            ->where('price', $pVal)
+                            ->first();
+                        if ($foundVarByPrice) {
+                            $variationId = $foundVarByPrice->id;
+                        }
+                    }
+                }
                 
                 $price = 0.0;
                 if ($orderTypeId && method_exists($menuItem, 'resolvePrice')) {
@@ -1773,7 +1819,7 @@ class PosProxyController extends Controller
                 $payload = array_filter([
                     'order_id' => $order->id,
                     'menu_item_id' => $menuItem->id,
-                    'menu_item_variation_id' => $item['variation_id'] ?? $item['menu_item_variation_id'] ?? null,
+                    'menu_item_variation_id' => $variationId,
                     'quantity' => $qty,
                     'price' => $price,
                     'amount' => $amount,
@@ -1816,6 +1862,7 @@ class PosProxyController extends Controller
 
                 $varName = $createdItem->menuItemVariation?->variation 
                     ?? $createdItem->menuItemVariation?->name 
+                    ?? ($variationId && Schema::hasTable('menu_item_variations') ? DB::table('menu_item_variations')->where('id', $variationId)->value('variation') : null)
                     ?? $item['variation'] 
                     ?? $item['variation_name'] 
                     ?? null;
@@ -2431,15 +2478,46 @@ class PosProxyController extends Controller
                             }
                         }
 
+                        $varName = $item->variation_name ?? $item->variation ?? null;
+                        $varId = $item->menu_item_variation_id ?? null;
+
+                        // Fallback 1: If variation is missing, check kot_items for this order
+                        if (empty($varName) && Schema::hasTable('kot_items') && Schema::hasTable('menu_item_variations')) {
+                            $kotVar = DB::table('kot_items')
+                                ->join('kots', 'kot_items.kot_id', '=', 'kots.id')
+                                ->leftJoin('menu_item_variations', 'kot_items.menu_item_variation_id', '=', 'menu_item_variations.id')
+                                ->where('kots.order_id', $item->order_id)
+                                ->where('kot_items.menu_item_id', $item->menu_item_id)
+                                ->whereNotNull('menu_item_variations.variation')
+                                ->select('menu_item_variations.variation', 'kot_items.menu_item_variation_id')
+                                ->first();
+                            if ($kotVar) {
+                                $varName = $kotVar->variation;
+                                $varId = $varId ?? $kotVar->menu_item_variation_id;
+                            }
+                        }
+
+                        // Fallback 2: Check by price matching in menu_item_variations
+                        if (empty($varName) && isset($item->price) && Schema::hasTable('menu_item_variations')) {
+                            $priceVar = DB::table('menu_item_variations')
+                                ->where('menu_item_id', $item->menu_item_id)
+                                ->where('price', (float) $item->price)
+                                ->first();
+                            if ($priceVar) {
+                                $varName = $priceVar->variation;
+                                $varId = $varId ?? $priceVar->id;
+                            }
+                        }
+
                         return [
                             'id' => $item->id,
                             'order_id' => $item->order_id,
                             'menu_item_id' => $item->menu_item_id,
                             'name' => $item->menu_item_name ?? 'Unknown Item',
-                            'variation' => $item->variation_name ?? $item->variation ?? null,
-                            'variation_name' => $item->variation_name ?? $item->variation ?? null,
-                            'variation_id' => $item->menu_item_variation_id ?? null,
-                            'menu_item_variation_id' => $item->menu_item_variation_id ?? null,
+                            'variation' => $varName,
+                            'variation_name' => $varName,
+                            'variation_id' => $varId,
+                            'menu_item_variation_id' => $varId,
                             'quantity' => $item->quantity,
                             'price' => $item->price !== null ? (float) $item->price : ($item->menu_item_price ?? null),
                             'amount' => $item->amount !== null ? (float) $item->amount : ($hasTotalCol && $item->total !== null ? (float) $item->total : null),
@@ -2905,14 +2983,45 @@ class PosProxyController extends Controller
                                 }
                             }
 
+                            $varName = $item->variation_name ?? $item->variation ?? null;
+                            $varId = $item->menu_item_variation_id ?? null;
+
+                            // Fallback 1: If variation is missing, check kot_items for this order
+                            if (empty($varName) && Schema::hasTable('kot_items') && Schema::hasTable('menu_item_variations')) {
+                                $kotVar = DB::table('kot_items')
+                                    ->join('kots', 'kot_items.kot_id', '=', 'kots.id')
+                                    ->leftJoin('menu_item_variations', 'kot_items.menu_item_variation_id', '=', 'menu_item_variations.id')
+                                    ->where('kots.order_id', $id)
+                                    ->where('kot_items.menu_item_id', $item->menu_item_id)
+                                    ->whereNotNull('menu_item_variations.variation')
+                                    ->select('menu_item_variations.variation', 'kot_items.menu_item_variation_id')
+                                    ->first();
+                                if ($kotVar) {
+                                    $varName = $kotVar->variation;
+                                    $varId = $varId ?? $kotVar->menu_item_variation_id;
+                                }
+                            }
+
+                            // Fallback 2: Check by price matching in menu_item_variations
+                            if (empty($varName) && isset($item->price) && Schema::hasTable('menu_item_variations')) {
+                                $priceVar = DB::table('menu_item_variations')
+                                    ->where('menu_item_id', $item->menu_item_id)
+                                    ->where('price', (float) $item->price)
+                                    ->first();
+                                if ($priceVar) {
+                                    $varName = $priceVar->variation;
+                                    $varId = $varId ?? $priceVar->id;
+                                }
+                            }
+
                             return [
                                 'id' => $item->id,
                                 'menu_item_id' => $item->menu_item_id,
                                 'name' => $item->menu_item_name ?? 'Unknown Item',
-                                'variation' => $item->variation_name ?? $item->variation ?? null,
-                                'variation_name' => $item->variation_name ?? $item->variation ?? null,
-                                'variation_id' => $item->menu_item_variation_id ?? null,
-                                'menu_item_variation_id' => $item->menu_item_variation_id ?? null,
+                                'variation' => $varName,
+                                'variation_name' => $varName,
+                                'variation_id' => $varId,
+                                'menu_item_variation_id' => $varId,
                                 'quantity' => $item->quantity,
                                 'price' => $item->price !== null ? (float) $item->price : ($item->menu_item_price ?? null),
                                 'amount' => $item->amount !== null ? (float) $item->amount : ($hasTotalCol && $item->total !== null ? (float) $item->total : null),
