@@ -1619,6 +1619,14 @@ class PosProxyController extends Controller
             $orderId = $data['order_id'] ?? null;
             $existingOrder = $orderId ? Order::where('branch_id', $this->branch->id)->where('id', $orderId)->first() : null;
 
+            if (! $existingOrder && $tableId && $normalizedOrderType === 'dine_in') {
+                $existingOrder = Order::where('branch_id', $this->branch->id)
+                    ->where('table_id', $tableId)
+                    ->occupyingTableSeats()
+                    ->orderByDesc('id')
+                    ->first();
+            }
+
             if ($existingOrder) {
                 $order = $existingOrder;
                 $order->sub_total = (float) $order->sub_total + (float) $subTotal;
@@ -1806,13 +1814,19 @@ class PosProxyController extends Controller
                     }
                 }
 
-                $varName = $createdItem->menuItemVariation?->variation ?? $createdItem->menuItemVariation?->name ?? null;
+                $varName = $createdItem->menuItemVariation?->variation 
+                    ?? $createdItem->menuItemVariation?->name 
+                    ?? $item['variation'] 
+                    ?? $item['variation_name'] 
+                    ?? null;
                 $orderItemsDisplay->push([
                     'id' => $createdItem->id,
                     'menu_item_id' => $menuItem->id,
                     'name' => $menuItem->item_name ?? $menuItem->name ?? 'Unknown Item',
                     'variation' => $varName,
                     'variation_name' => $varName,
+                    'variation_id' => $createdItem->menu_item_variation_id,
+                    'menu_item_variation_id' => $createdItem->menu_item_variation_id,
                     'quantity' => $qty,
                     'price' => $price,
                     'amount' => $amount,
@@ -1910,7 +1924,7 @@ class PosProxyController extends Controller
                 }
             }
 
-            $orderResource = new OrderResource($order->fresh(['items', 'charges', 'taxes']));
+            $orderResource = new OrderResource($order->fresh(['items.menuItem', 'items.menuItemVariation', 'charges', 'taxes']));
 
             DB::commit();
 
@@ -2423,6 +2437,9 @@ class PosProxyController extends Controller
                             'menu_item_id' => $item->menu_item_id,
                             'name' => $item->menu_item_name ?? 'Unknown Item',
                             'variation' => $item->variation_name ?? $item->variation ?? null,
+                            'variation_name' => $item->variation_name ?? $item->variation ?? null,
+                            'variation_id' => $item->menu_item_variation_id ?? null,
+                            'menu_item_variation_id' => $item->menu_item_variation_id ?? null,
                             'quantity' => $item->quantity,
                             'price' => $item->price !== null ? (float) $item->price : ($item->menu_item_price ?? null),
                             'amount' => $item->amount !== null ? (float) $item->amount : ($hasTotalCol && $item->total !== null ? (float) $item->total : null),
@@ -2893,6 +2910,9 @@ class PosProxyController extends Controller
                                 'menu_item_id' => $item->menu_item_id,
                                 'name' => $item->menu_item_name ?? 'Unknown Item',
                                 'variation' => $item->variation_name ?? $item->variation ?? null,
+                                'variation_name' => $item->variation_name ?? $item->variation ?? null,
+                                'variation_id' => $item->menu_item_variation_id ?? null,
+                                'menu_item_variation_id' => $item->menu_item_variation_id ?? null,
                                 'quantity' => $item->quantity,
                                 'price' => $item->price !== null ? (float) $item->price : ($item->menu_item_price ?? null),
                                 'amount' => $item->amount !== null ? (float) $item->amount : ($hasTotalCol && $item->total !== null ? (float) $item->total : null),
@@ -4195,7 +4215,7 @@ class PosProxyController extends Controller
             $offset = max(0, (int) $request->query('offset', 0));
 
             $query = \App\Models\Kot::where('branch_id', $this->branch->id)
-                ->with(['items.menuItem', 'items.menuItemVariation', 'items.modifierOptions', 'order', 'kotPlace', 'orderType'])
+                ->with(['items.menuItem', 'items.menuItemVariation', 'items.orderItem.menuItemVariation', 'items.modifierOptions', 'order', 'kotPlace', 'orderType'])
                 ->whereDate('created_at', $date)
                 ->where(function ($q) {
                     $q->whereNull('order_id')
@@ -4244,7 +4264,18 @@ class PosProxyController extends Controller
                             'id' => $item->id,
                             'menu_item_id' => $item->menu_item_id,
                             'name' => $item->menuItem?->item_name ?? $item->menuItem?->name ?? 'Unknown',
-                            'variation' => $item->menuItemVariation?->variation ?? $item->menuItemVariation?->name ?? null,
+                            'variation' => $item->menuItemVariation?->variation 
+                                ?? $item->menuItemVariation?->name 
+                                ?? $item->orderItem?->menuItemVariation?->variation 
+                                ?? $item->orderItem?->menuItemVariation?->name 
+                                ?? null,
+                            'variation_name' => $item->menuItemVariation?->variation 
+                                ?? $item->menuItemVariation?->name 
+                                ?? $item->orderItem?->menuItemVariation?->variation 
+                                ?? $item->orderItem?->menuItemVariation?->name 
+                                ?? null,
+                            'variation_id' => $item->menu_item_variation_id ?? $item->orderItem?->menu_item_variation_id ?? null,
+                            'menu_item_variation_id' => $item->menu_item_variation_id ?? $item->orderItem?->menu_item_variation_id ?? null,
                             'quantity' => $item->quantity,
                             'status' => $item->status,
                             'note' => $item->note,
@@ -4330,8 +4361,18 @@ class PosProxyController extends Controller
                         'order_item_id' => $item->order_item_id,
                         'menu_item_id' => $item->menu_item_id,
                         'name' => $item->menuItem?->item_name ?? $item->menuItem?->name ?? 'Unknown',
-                        'variation_id' => $item->menu_item_variation_id,
-                        'variation' => $item->menuItemVariation?->variation ?? $item->menuItemVariation?->name ?? null,
+                        'variation_id' => $item->menu_item_variation_id ?? $item->orderItem?->menu_item_variation_id ?? null,
+                        'menu_item_variation_id' => $item->menu_item_variation_id ?? $item->orderItem?->menu_item_variation_id ?? null,
+                        'variation' => $item->menuItemVariation?->variation 
+                            ?? $item->menuItemVariation?->name 
+                            ?? $item->orderItem?->menuItemVariation?->variation 
+                            ?? $item->orderItem?->menuItemVariation?->name 
+                            ?? null,
+                        'variation_name' => $item->menuItemVariation?->variation 
+                            ?? $item->menuItemVariation?->name 
+                            ?? $item->orderItem?->menuItemVariation?->variation 
+                            ?? $item->orderItem?->menuItemVariation?->name 
+                            ?? null,
                         'quantity' => $item->quantity,
                         'status' => $item->status,
                         'note' => $item->note,
@@ -4652,7 +4693,7 @@ class PosProxyController extends Controller
             }
 
             $kots = \App\Models\Kot::where('order_id', $orderId)
-                ->with(['items.menuItem', 'items.menuItemVariation', 'items.modifierOptions', 'kotPlace'])
+                ->with(['items.menuItem', 'items.menuItemVariation', 'items.orderItem.menuItemVariation', 'items.modifierOptions', 'kotPlace'])
                 ->orderBy('created_at')
                 ->get();
 
@@ -4670,7 +4711,18 @@ class PosProxyController extends Controller
                             'id' => $item->id,
                             'menu_item_id' => $item->menu_item_id,
                             'name' => $item->menuItem?->item_name ?? $item->menuItem?->name ?? 'Unknown',
-                            'variation' => $item->menuItemVariation?->variation ?? $item->menuItemVariation?->name ?? null,
+                            'variation_id' => $item->menu_item_variation_id ?? $item->orderItem?->menu_item_variation_id ?? null,
+                            'menu_item_variation_id' => $item->menu_item_variation_id ?? $item->orderItem?->menu_item_variation_id ?? null,
+                            'variation' => $item->menuItemVariation?->variation 
+                                ?? $item->menuItemVariation?->name 
+                                ?? $item->orderItem?->menuItemVariation?->variation 
+                                ?? $item->orderItem?->menuItemVariation?->name 
+                                ?? null,
+                            'variation_name' => $item->menuItemVariation?->variation 
+                                ?? $item->menuItemVariation?->name 
+                                ?? $item->orderItem?->menuItemVariation?->variation 
+                                ?? $item->orderItem?->menuItemVariation?->name 
+                                ?? null,
                             'quantity' => $item->quantity,
                             'status' => $item->status,
                             'note' => $item->note,
