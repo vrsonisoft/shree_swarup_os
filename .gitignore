@@ -17,6 +17,9 @@
 
 # Ignore scratch and local temp files
 /scratch/
+/database_backups/
+*.sql
+*.sql.gz
 /.vscode/
 /.idea/
 /.fleet/
