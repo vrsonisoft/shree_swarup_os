@@ -18,6 +18,7 @@
 # Ignore scratch and local temp files
 /scratch/
 /database_backups/
+/server_configs/
 *.sql
 *.sql.gz
 /.vscode/
