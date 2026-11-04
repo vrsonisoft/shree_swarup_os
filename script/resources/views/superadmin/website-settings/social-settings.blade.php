@@ -48,8 +48,8 @@
         color: #94a3b8;
     }
     .social-settings-input:focus {
-        border-color: var(--color-base, #00b692) !important;
-        box-shadow: 0 0 0 3px rgba(0, 182, 146, 0.15) !important;
+        border-color: var(--color-base, #2E6F40) !important;
+        box-shadow: 0 0 0 3px rgba(46, 111, 64, 0.15) !important;
     }
 
     /* Dark mode inputs */
@@ -62,8 +62,8 @@
         color: #64748b !important;
     }
     .dark .social-settings-input:focus {
-        border-color: var(--color-base, #00b692) !important;
-        box-shadow: 0 0 0 3px rgba(0, 182, 146, 0.25) !important;
+        border-color: var(--color-base, #2E6F40) !important;
+        box-shadow: 0 0 0 3px rgba(46, 111, 64, 0.25) !important;
     }
 
     /* Grid & Center Gap */

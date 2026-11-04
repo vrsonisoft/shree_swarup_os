@@ -120,6 +120,18 @@ class EmailSettings extends Component
             $transport = new EsmtpTransport($this->smtpHost, $this->smtpPort, $tls);
             $transport->setUsername($this->mailUsername);
             $transport->setPassword($this->mailPassword);
+            
+            $stream = $transport->getStream();
+            if ($stream instanceof \Symfony\Component\Mailer\Transport\Smtp\Stream\SocketStream) {
+                $stream->setStreamOptions([
+                    'ssl' => [
+                        'allow_self_signed' => true,
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
+                    ]
+                ]);
+            }
+            
             $transport->start();
 
             if ($this->emailSetting->verified == 0) {

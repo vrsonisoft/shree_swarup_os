@@ -9,12 +9,12 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     {{-- FAVICONS --}}
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ global_setting()->upload_fav_icon_apple_touch_icon_url }}">
-    <link rel="icon" type="image/png" sizes="192x192" href="{{ global_setting()->upload_fav_icon_android_chrome_192_url }}">
-    <link rel="icon" type="image/png" sizes="512x512" href="{{ global_setting()->upload_fav_icon_android_chrome_512_url }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ global_setting()->upload_fav_icon_16_url }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ global_setting()->upload_fav_icon_32_url }}">
-    <link rel="shortcut icon" href="{{ global_setting()->favicon_url }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ global_setting()->upload_fav_icon_apple_touch_icon_url }}?v=20261105_w2">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ global_setting()->upload_fav_icon_android_chrome_192_url }}?v=20261105_w2">
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ global_setting()->upload_fav_icon_android_chrome_512_url }}?v=20261105_w2">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ global_setting()->upload_fav_icon_16_url }}?v=20261105_w2">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ global_setting()->upload_fav_icon_32_url }}?v=20261105_w2">
+    <link rel="shortcut icon" href="{{ global_setting()->favicon_url }}?v=20261105_w2">
 
 
     <meta name="msapplication-TileColor" content="#ffffff">
@@ -54,7 +54,7 @@
         }
         /* Mobile Drawer Buttons */
         #mobile-menu-drawer .btn-drawer-signup {
-          background-color: #00B692 !important;
+          background-color: #2E6F40 !important;
           color: #ffffff !important;
           font-weight: 700 !important;
           display: block !important;
@@ -62,7 +62,7 @@
           text-align: center !important;
           padding: 14px 0 !important;
           border-radius: 12px !important;
-          box-shadow: 0 4px 14px rgba(0, 182, 146, 0.3) !important;
+          box-shadow: 0 4px 14px rgba(46, 111, 64, 0.3) !important;
           text-transform: uppercase !important;
           letter-spacing: 0.5px !important;
           font-size: 14px !important;
@@ -70,7 +70,7 @@
           text-decoration: none !important;
         }
         #mobile-menu-drawer .btn-drawer-signup:hover {
-          background-color: #009c7d !important;
+          background-color: #253D2C !important;
           color: #ffffff !important;
         }
         #mobile-menu-drawer .btn-drawer-login {
@@ -85,43 +85,57 @@
           border: 1px solid #d1d5db !important;
           text-decoration: none !important;
         }
+        #mobile-menu-drawer .btn-drawer-login:hover {
+          border-color: #68BA7F !important;
+          color: #2E6F40 !important;
+          background-color: #CFFFDC !important;
+        }
         html.dark #mobile-menu-drawer .btn-drawer-login {
           color: #e5e7eb !important;
           border-color: #4b5563 !important;
+        }
+        html.dark #mobile-menu-drawer .btn-drawer-login:hover {
+          border-color: #68BA7F !important;
+          color: #CFFFDC !important;
+          background-color: #253D2C !important;
         }
         /* Mobile Drawer Text Colors in Dark & Light Mode */
         #mobile-menu-drawer a.drawer-nav-link {
           color: #1f2937 !important;
         }
         #mobile-menu-drawer a.drawer-nav-link:hover {
-          color: #00b692 !important;
+          color: #2E6F40 !important;
         }
         #mobile-menu-drawer a.drawer-nav-link.active-nav-link {
-          color: #00b692 !important;
+          color: #2E6F40 !important;
           font-weight: 700 !important;
         }
         html.dark #mobile-menu-drawer a.drawer-nav-link {
           color: #f3f4f6 !important;
         }
         html.dark #mobile-menu-drawer a.drawer-nav-link:hover {
-          color: #00b692 !important;
+          color: #68BA7F !important;
         }
         html.dark #mobile-menu-drawer a.drawer-nav-link.active-nav-link {
-          color: #00b692 !important;
+          color: #68BA7F !important;
           font-weight: 700 !important;
         }
         :root {
-            --color-base: 0, 182, 146 !important;
-            --theme-color: #00B692 !important;
+            --color-base: 46, 111, 64 !important;
+            --theme-color: #2E6F40 !important;
+            --forest-primary: #2E6F40 !important;
+            --forest-mint: #CFFFDC !important;
+            --forest-accent: #68BA7F !important;
+            --forest-dark: #253D2C !important;
         }
         .bg-skin-base {
-            background-color: #00B692 !important;
+            background-color: #2E6F40 !important;
         }
         .text-skin-base {
-            color: #00B692 !important;
+            color: #2E6F40 !important;
         }
         .border-skin-base {
-            border-color: #00B692 !important;
+            border-color: #2E6F40 !important;
         }
     </style>
 
@@ -147,7 +161,7 @@
                     <a href="{{ url('/') }}" class="flex items-center gap-2 app-logo min-w-0 shrink" style="display:inline-flex; align-items:center; text-decoration:none;">
                         <img src="{{ asset('img/logo.png') }}" class="w-[40px] h-[40px] object-contain rounded-md shrink-0" style="height:40px; width:40px; max-height:40px; max-width:40px; object-fit:contain; border-radius:6px; flex-shrink:0;" alt="ChowChak Logo" />
                         <span class="logo-text shrink min-w-0 overflow-hidden text-ellipsis" style="font-size:clamp(14px, 4.5vw, 18px); font-family:'Montserrat', 'Plus Jakarta Sans', sans-serif; font-weight:900; letter-spacing:0.5px; text-transform:uppercase; display:inline-flex; align-items:center; line-height:1; margin-left:6px; white-space:nowrap;">
-                            <span style="color:#00B692; font-weight:900;">CHOW</span><span style="color:#9CB080; font-weight:900;">CHAK</span>
+                            <span style="color:#2E6F40; font-weight:900;">CHOW</span><span style="color:#53B86F; font-weight:900;">CHAK</span>
                         </span>
                     </a>
                     <div class="flex flex-shrink-0 items-center gap-2">
@@ -179,7 +193,7 @@
                 <a href="{{ url('/') }}" class="flex items-center gap-2.5 app-logo" style="text-decoration:none;">
                     <img src="{{ asset('img/logo.png') }}" style="height:36px; width:38px; object-fit:contain; border-radius:6px;" alt="ChowChak Logo" />
                     <span style="font-size:18px; font-family:'Montserrat', 'Plus Jakarta Sans', sans-serif; font-weight:900; letter-spacing:0.5px; text-transform:uppercase; line-height:1;">
-                        <span style="color:#00B692; font-weight:900;">CHOW</span><span style="color:#9CB080; font-weight:900;">CHAK</span>
+                        <span style="color:#2E6F40; font-weight:900;">CHOW</span><span style="color:#53B86F; font-weight:900;">CHAK</span>
                     </span>
                 </a>
                 <div class="flex items-center gap-2">
@@ -191,7 +205,7 @@
                             <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
                         </svg>
                     </button>
-                    <button id="close-mobile-menu" type="button" class="w-10 h-10 rounded-xl bg-teal-50 dark:bg-gray-800 text-teal-600 dark:text-teal-400 flex items-center justify-center text-xl font-bold hover:bg-teal-100 dark:hover:bg-gray-700 transition">
+                    <button id="close-mobile-menu" type="button" class="w-10 h-10 rounded-xl bg-[#CFFFDC] dark:bg-[#253D2C] text-[#253D2C] dark:text-[#CFFFDC] border border-[#68BA7F] flex items-center justify-center text-xl font-bold hover:bg-[#68BA7F] hover:text-white dark:hover:bg-[#68BA7F] transition">
                         ✕
                     </button>
                 </div>
@@ -236,7 +250,7 @@
                         @lang('app.login')
                     @endif
                 </a>
-                <a href="{{ route('restaurant_signup') }}" wire:navigate class="btn-drawer-signup" style="background-color:#00B692 !important; color:#ffffff !important; font-weight:700 !important; display:block !important; width:100% !important; text-align:center !important; padding:14px 0 !important; border-radius:12px !important; text-transform:uppercase !important; text-decoration:none !important;">
+                <a href="{{ route('restaurant_signup') }}" wire:navigate class="btn-drawer-signup" style="background-color:#2E6F40 !important; color:#ffffff !important; font-weight:700 !important; display:block !important; width:100% !important; text-align:center !important; padding:14px 0 !important; border-radius:12px !important; text-transform:uppercase !important; text-decoration:none !important;">
                     @lang('landing.getStarted')
                 </a>
             </div>
@@ -326,7 +340,7 @@
                     <a href="{{ url('/') }}" class="flex items-center gap-3 app-logo" style="display:inline-flex; align-items:center; text-decoration:none;">
                         <img src="{{ asset('img/logo.png') }}" class="w-[52px] h-[52px] object-contain rounded-md shrink-0 shadow-sm" style="height:52px; width:52px; max-height:52px; max-width:52px; object-fit:contain; border-radius:6px; flex-shrink:0;" alt="ChowChak Logo" />
                         <span class="logo-text" style="font-size:22px; font-family:'Montserrat', 'Plus Jakarta Sans', sans-serif; font-weight:900; letter-spacing:0.5px; text-transform:uppercase; display:inline-flex; align-items:center; line-height:1; margin-left:12px;">
-                            <span style="color:#00B692; font-weight:900;">CHOW</span><span style="color:#9CB080; font-weight:900;">CHAK</span>
+                            <span style="color:#2E6F40; font-weight:900;">CHOW</span><span style="color:#53B86F; font-weight:900;">CHAK</span>
                         </span>
                     </a>
                     <div class="flex items-center lg:order-2">

@@ -104,6 +104,7 @@ class CustomConfigProvider extends ServiceProvider
             Config::set('mail.mailers.smtp.username', $setting->mail_username);
             Config::set('mail.mailers.smtp.password', $password);
             Config::set('mail.mailers.smtp.encryption', $setting->smtp_encryption);
+            Config::set('mail.mailers.smtp.verify_peer', false);
 
             Config::set('queue.default', ($setting->enable_queue == 'yes' ? 'database' : 'sync'));
         }

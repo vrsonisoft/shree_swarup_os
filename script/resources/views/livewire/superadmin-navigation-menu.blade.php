@@ -21,7 +21,7 @@
           <a href="{{ route('superadmin.dashboard') }}" class="flex ltr:ml-2 rtl:mr-24 items-center app-logo" style="display:inline-flex; align-items:center; text-decoration:none;">
             <x-global-logo :setting="restaurantOrGlobalSetting()" class="h-8 ltr:mr-2.5 rtl:ml-2.5" />
             <span class="logo-text self-center text-lg font-black uppercase tracking-wider hidden lg:inline-flex nav-brand-text" style="font-family:'Montserrat', sans-serif; line-height:1;">
-                <span style="color:#00B692; font-weight:900;">CHOW</span><span style="color:#9CB080; font-weight:900;">CHAK</span>
+                <span style="color:#2E6F40; font-weight:900;">CHOW</span><span style="color:#53B86F; font-weight:900;">CHAK</span>
             </span>
           </a>
 
@@ -123,7 +123,7 @@
                     role="menuitem">
                     @lang('menu.appUpdate')
 
-                    <span class="bg-skin-base text-white text-xs font-medium px-1.5 py-0.5 rounded-full dark:bg-gray-500 dark:text-gray-300">v{{ \Illuminate\Support\Facades\File::get('version.txt') }}</span>
+                    <span class="bg-skin-base text-white text-xs font-medium px-1.5 py-0.5 rounded-full dark:bg-gray-500 dark:text-gray-300">v{{ \Illuminate\Support\Facades\File::exists(public_path('version.txt')) ? trim(\Illuminate\Support\Facades\File::get(public_path('version.txt'))) : (\Illuminate\Support\Facades\File::exists(base_path('version.txt')) ? trim(\Illuminate\Support\Facades\File::get(base_path('version.txt'))) : '1.3.10') }}</span>
                   </a>
                 </li>
 

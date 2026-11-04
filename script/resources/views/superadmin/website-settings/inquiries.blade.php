@@ -52,8 +52,8 @@
         color: #94a3b8;
     }
     .inquiry-search-input:focus {
-        border-color: var(--color-base, #00b692) !important;
-        box-shadow: 0 0 0 3px rgba(0, 182, 146, 0.15) !important;
+        border-color: var(--color-base, #2E6F40) !important;
+        box-shadow: 0 0 0 3px rgba(46, 111, 64, 0.15) !important;
     }
     .dark .inquiry-search-input {
         background-color: #080d1a !important;
@@ -81,8 +81,8 @@
         min-width: 14rem;
     }
     .inquiry-category-select:focus {
-        border-color: var(--color-base, #00b692) !important;
-        box-shadow: 0 0 0 3px rgba(0, 182, 146, 0.15) !important;
+        border-color: var(--color-base, #2E6F40) !important;
+        box-shadow: 0 0 0 3px rgba(46, 111, 64, 0.15) !important;
     }
     .dark .inquiry-category-select {
         background-color: #080d1a !important;

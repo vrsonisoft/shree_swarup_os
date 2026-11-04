@@ -38,8 +38,8 @@
         color: #94a3b8;
     }
     .subscriber-search-input:focus {
-        border-color: var(--color-base, #00b692) !important;
-        box-shadow: 0 0 0 3px rgba(0, 182, 146, 0.15) !important;
+        border-color: var(--color-base, #2E6F40) !important;
+        box-shadow: 0 0 0 3px rgba(46, 111, 64, 0.15) !important;
     }
     .dark .subscriber-search-input {
         background-color: #080d1a !important;

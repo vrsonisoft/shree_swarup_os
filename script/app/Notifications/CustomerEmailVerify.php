@@ -23,11 +23,17 @@ class CustomerEmailVerify extends BaseNotification
     public function toMail(object $notifiable): MailMessage
     {
         $build = parent::build($notifiable);
+        $appName = config('app.name', 'ChowChak');
+
         return $build
-            ->subject(config('app.name') . ' ' . __('email.emailVerification.subject'))
-            ->greeting(__('app.hello') . ' ' . $notifiable->name . '!')
-            ->line(__('email.emailVerification.text1'))
-            ->line($notifiable->email_otp);
+            ->subject($appName . ' - ' . __('email.emailVerification.subject'))
+            ->view('emails.otp_verification', [
+                'name' => $notifiable->name ?? 'User',
+                'otp' => $notifiable->email_otp,
+                'appName' => $appName,
+                'type' => 'customer_verify',
+                'expireMinutes' => 10,
+            ]);
     }
 
     /**

@@ -9,12 +9,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ restaurantOrGlobalSetting()->upload_fav_icon_apple_touch_icon_url }}?v=1">
-    <link rel="icon" type="image/png" sizes="192x192" href="{{ restaurantOrGlobalSetting()->upload_fav_icon_android_chrome_192_url }}?v=1">
-    <link rel="icon" type="image/png" sizes="512x512" href="{{ restaurantOrGlobalSetting()->upload_fav_icon_android_chrome_512_url }}?v=1">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ restaurantOrGlobalSetting()->upload_favicon_16_url }}?v=1">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ restaurantOrGlobalSetting()->upload_favicon_32_url }}?v=1">
-    <link rel="shortcut icon" href="{{ restaurantOrGlobalSetting()->favicon_url }}?v=1">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ restaurantOrGlobalSetting()->upload_fav_icon_apple_touch_icon_url }}?v=20261105_w2">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ restaurantOrGlobalSetting()->upload_fav_icon_android_chrome_192_url }}?v=20261105_w2">
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ restaurantOrGlobalSetting()->upload_fav_icon_android_chrome_512_url }}?v=20261105_w2">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ restaurantOrGlobalSetting()->upload_favicon_16_url }}?v=20261105_w2">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ restaurantOrGlobalSetting()->upload_favicon_32_url }}?v=20261105_w2">
+    <link rel="shortcut icon" href="{{ restaurantOrGlobalSetting()->favicon_url }}?v=20261105_w2">
 
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" content="{{ restaurantOrGlobalSetting()->upload_fav_icon_apple_touch_icon_url }}">
@@ -184,7 +184,7 @@ html.dark .logo-subtext { color: #9CB080 !important; }
                 <a href="{{ url('/') }}" class="flex items-center gap-2 app-logo" style="display:inline-flex; align-items:center; text-decoration:none;">
                     <img src="{{ asset('img/logo.png') }}" class="logo-img-head object-contain rounded-xl shrink-0 shadow-sm" alt="ChowChak Logo" />
                     <span class="logo-text-title">
-                        <span style="color:#00B692; font-weight:900;">CHOW</span><span class="logo-subtext" style="font-weight:900;">CHAK</span>
+                        <span style="color:#2E6F40; font-weight:900;">CHOW</span><span class="logo-subtext" style="color:#53B86F; font-weight:900;">CHAK</span>
                     </span>
                 </a>
             </div>

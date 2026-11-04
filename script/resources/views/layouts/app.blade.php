@@ -18,12 +18,12 @@
     <link rel="stylesheet" href="{{ asset('vendor/trix/trix.css') }}" />
     <link rel="stylesheet" href="{{ asset('vendor/pikaday.css') }}" />
 
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ restaurantOrGlobalSetting()->upload_fav_icon_apple_touch_icon_url }}?v=1">
-    <link rel="icon" type="image/png" sizes="192x192" href="{{ restaurantOrGlobalSetting()->upload_fav_icon_android_chrome_192_url }}?v=1">
-    <link rel="icon" type="image/png" sizes="512x512" href="{{ restaurantOrGlobalSetting()->upload_fav_icon_android_chrome_512_url }}?v=1">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ restaurantOrGlobalSetting()->upload_favicon_16_url }}?v=1">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ restaurantOrGlobalSetting()->upload_favicon_32_url }}?v=1">
-    <link rel="shortcut icon" href="{{ restaurantOrGlobalSetting()->favicon_url }}?v=1">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ restaurantOrGlobalSetting()->upload_fav_icon_apple_touch_icon_url }}?v=20261105_w2">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ restaurantOrGlobalSetting()->upload_fav_icon_android_chrome_192_url }}?v=20261105_w2">
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ restaurantOrGlobalSetting()->upload_fav_icon_android_chrome_512_url }}?v=20261105_w2">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ restaurantOrGlobalSetting()->upload_favicon_16_url }}?v=20261105_w2">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ restaurantOrGlobalSetting()->upload_favicon_32_url }}?v=20261105_w2">
+    <link rel="shortcut icon" href="{{ restaurantOrGlobalSetting()->favicon_url }}?v=20261105_w2">
 
 
 
@@ -80,7 +80,7 @@
         /* Active Menu Item Icon Color matching Border/Theme */
         aside#sidebar a.border-skin-base svg,
         aside#sidebar button.border-skin-base svg {
-            color: var(--color-base, #00b692) !important;
+            color: var(--color-base, #2E6F40) !important;
         }
         aside#sidebar a.border-skin-base svg *,
         aside#sidebar button.border-skin-base svg * {
@@ -860,7 +860,7 @@
         z-index: 9999;
         top: 0; left: 0;
         transform: translate(-50%, -50%);
-        background: radial-gradient(circle, rgba(0,182,146,0.18) 0%, rgba(0,182,146,0.07) 35%, transparent 70%);
+        background: radial-gradient(circle, rgba(104,186,127,0.22) 0%, rgba(46,111,64,0.10) 35%, transparent 70%);
         transition: opacity 0.3s ease;
         will-change: transform;
     "></div>

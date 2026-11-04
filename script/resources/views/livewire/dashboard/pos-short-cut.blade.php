@@ -1,7 +1,7 @@
 <div>
     <div class="relative">
         <a href="{{ route('pos.index') }}"
-          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#00B692] text-white hover:bg-[#009e7e] transition duration-150 text-xs font-bold shadow-sm cursor-pointer">
+          class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#2E6F40] text-white hover:bg-[#245833] transition duration-150 text-xs font-bold shadow-sm cursor-pointer">
           <i class="ti ti-device-desktop text-base"></i>
           <span class="hidden lg:block uppercase tracking-wider">@lang('menu.pos')</span>
         </a>

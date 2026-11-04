@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <link rel="shortcut icon" href="{{ $restaurant->faviconUrl }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ $restaurant->uploadFavIcon16Url }}?v=20261105_w2">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ $restaurant->uploadFavIcon32Url }}?v=20261105_w2">
+    <link rel="shortcut icon" href="{{ $restaurant->faviconUrl }}?v=20261105_w2">
     <title>{{ $restaurant->name }} - @lang('menu.deliveryExecutivePortal')</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])

@@ -18,8 +18,8 @@ class GlobalSettingSeeder extends Seeder
     {
         $setting = GlobalSetting::first() ?: new GlobalSetting();
         $setting->name = 'ChowChak';
-        $setting->theme_hex = '#00b692';
-        $setting->theme_rgb = '0, 182, 146';
+        $setting->theme_hex = '#2E6F40';
+        $setting->theme_rgb = '46, 111, 64';
         $setting->hash = md5(microtime());
         $setting->installed_url = config('app.url');
         $setting->facebook_link = 'https://www.facebook.com/';

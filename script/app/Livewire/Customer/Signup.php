@@ -81,8 +81,16 @@ class Signup extends Component
      */
     protected function isSmsLoginEnabled()
     {
+        if (!empty(config('services.msg91.auth_key')) && !empty(config('services.msg91.whatsapp_number'))) {
+            return true;
+        }
+
         if (!module_enabled('Sms')) {
             return false;
+        }
+
+        if (config('services.fast2sms.enabled') && !empty(config('services.fast2sms.key'))) {
+            return true;
         }
 
         if (!in_array('Sms', restaurant_modules($this->restaurant))) {
@@ -239,6 +247,19 @@ class Signup extends Component
 
         try {
             if ($this->isSmsLoginEnabled()) {
+                if (!empty(config('services.msg91.auth_key')) && !empty(config('services.msg91.whatsapp_number'))) {
+                    $waResult = \App\Services\Msg91WhatsAppService::sendOtp($this->customer->phone, $otp, $this->customer->name ?? 'Customer');
+                    if ($waResult['success']) {
+                        return;
+                    }
+                }
+
+                if (config('services.fast2sms.enabled') && !empty(config('services.fast2sms.key'))) {
+                    $smsResult = \App\Services\Fast2SmsService::sendOtp($this->customer->phone, $otp);
+                    if ($smsResult['success']) {
+                        return;
+                    }
+                }
                 $this->customer->notify(new SendCustomerVerifyOtp($otp));
                 return;
             }

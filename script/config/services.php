@@ -46,4 +46,16 @@ return [
         'model' => env('OPENAI_MODEL', 'gpt-4o'),
     ],
 
+    'fast2sms' => [
+        'key' => env('FAST2SMS_API_KEY'),
+        'enabled' => env('FAST2SMS_ENABLED', true),
+        'route' => env('FAST2SMS_ROUTE', 'q'),
+    ],
+
+    'msg91' => [
+        'auth_key' => env('MSG91_AUTH_KEY'),
+        'whatsapp_number' => env('MSG91_WHATSAPP_NUMBER'),
+        'whatsapp_template' => env('MSG91_WHATSAPP_TEMPLATE', 'chowchak_access_code'),
+    ],
+
 ];

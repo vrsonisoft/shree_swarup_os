@@ -25,35 +25,35 @@
     }
     html:not(.dark) .auth-input::placeholder { color: #9ca3af !important; }
     html:not(.dark) .auth-input:focus {
-        border-color: #00b692 !important;
+        border-color: #2E6F40 !important;
         outline: none !important;
-        box-shadow: 0 0 0 3px rgba(0, 182, 146, 0.2) !important;
+        box-shadow: 0 0 0 3px rgba(104, 186, 127, 0.25) !important;
     }
     html:not(.dark) .auth-text { color: #4b5563 !important; }
 
     html.dark .auth-card-container {
-        background-color: #10201b !important;
-        border: 1px solid #1c382f !important;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+        background-color: #253D2C !important;
+        border: 1.5px solid #68BA7F !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
     }
     html.dark .auth-title { color: #ffffff !important; }
-    html.dark .auth-subtitle { color: #9ca3af !important; }
+    html.dark .auth-subtitle { color: #CFFFDC !important; opacity: 0.9; }
     html.dark .auth-label { color: #e5e7eb !important; }
     html.dark .auth-input {
-        background-color: #152922 !important;
-        border: 1.5px solid #204035 !important;
+        background-color: #1a2c20 !important;
+        border: 1.5px solid #33533c !important;
         color: #ffffff !important;
     }
     html.dark .auth-input::placeholder { color: #6b7280 !important; }
     html.dark .auth-input:focus {
-        border-color: #00b692 !important;
+        border-color: #68BA7F !important;
         outline: none !important;
-        box-shadow: 0 0 0 3px rgba(0, 182, 146, 0.25) !important;
+        box-shadow: 0 0 0 3px rgba(104, 186, 127, 0.3) !important;
     }
     html.dark .auth-text { color: #d1d5db !important; }
 
     .auth-submit-btn {
-        background-color: #00b692 !important;
+        background-color: #2E6F40 !important;
         color: #ffffff !important;
         font-weight: 700 !important;
         font-size: 16px !important;
@@ -65,12 +65,12 @@
         align-items: center !important;
         justify-content: center !important;
         cursor: pointer !important;
-        box-shadow: 0 4px 16px rgba(0, 182, 146, 0.35) !important;
+        box-shadow: 0 4px 16px rgba(46, 111, 64, 0.35) !important;
         transition: all 0.2s ease !important;
     }
     .auth-submit-btn:hover {
-        background-color: #009c7d !important;
-        box-shadow: 0 6px 20px rgba(0, 182, 146, 0.45) !important;
+        background-color: #253D2C !important;
+        box-shadow: 0 6px 20px rgba(37, 61, 44, 0.5) !important;
         transform: translateY(-1px) !important;
     }
     .auth-submit-btn:active {
@@ -111,7 +111,7 @@
         <x-validation-errors class="mb-4"/>
 
         @session('status')
-        <div style="margin-bottom: 16px; font-size: 14px; font-weight: 500; color: #00b692; background: rgba(0,182,146,0.1); padding: 12px 16px; border-radius: 10px; border: 1px solid rgba(0,182,146,0.2);">
+        <div style="margin-bottom: 16px; font-size: 14px; font-weight: 600; color: #253D2C; background: #CFFFDC; padding: 12px 16px; border-radius: 10px; border: 1.5px solid #68BA7F;">
             {{ $value }}
         </div>
         @endsession
@@ -160,7 +160,7 @@
             <!-- Remember Me & Forgot Password -->
             <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
                 <label for="remember_me" style="display: inline-flex; align-items: center; cursor: pointer; user-select: none;">
-                    <input id="remember_me" type="checkbox" name="remember" style="width: 16px; height: 16px; accent-color: #00b692; cursor: pointer; border-radius: 4px;" />
+                    <input id="remember_me" type="checkbox" name="remember" style="width: 16px; height: 16px; accent-color: #2E6F40; cursor: pointer; border-radius: 4px;" />
                     <span class="auth-text" style="margin-left: 8px; font-size: 14px; font-weight: 500;">Remember me</span>
                 </label>
                 <a href="{{ route('password.request') }}" style="font-size: 14px; font-weight: 600; color: #d97706; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
@@ -184,7 +184,7 @@
                 @if(!module_enabled('Subdomain'))
                 <div class="auth-subtitle" style="font-size: 14px; font-weight: 500;">
                     New to ChowChak? 
-                    <a href="{{ route('restaurant_signup') }}" style="color: #00b692; font-weight: 700; text-decoration: none; margin-left: 4px;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                    <a href="{{ route('restaurant_signup') }}" style="color: #2E6F40; font-weight: 700; text-decoration: none; margin-left: 4px;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
                         Create an account
                     </a>
                 </div>

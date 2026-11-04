@@ -93,6 +93,14 @@ class RestaurantSignup extends Component
      */
     public function isPhoneVerificationEnabled()
     {
+        if (!empty(config('services.msg91.auth_key')) && !empty(config('services.msg91.whatsapp_number'))) {
+            return true;
+        }
+
+        if (config('services.fast2sms.enabled') && !empty(config('services.fast2sms.key'))) {
+            return true;
+        }
+
         if (!module_enabled('Sms')) {
             return false;
         }
@@ -130,10 +138,23 @@ class RestaurantSignup extends Component
             session(['restaurant_otp' => $this->generatedOtp]);
             session(['restaurant_otp_expires' => now()->addMinutes(5)]);
 
-            $restaurant = new User();
-            $restaurant->phone_number = $this->restaurantPhoneNumber;
-            $restaurant->phone_code = $this->restaurantPhoneCode;
-            $restaurant->notify(new SendVerifyOtp($this->generatedOtp));
+            if (!empty(config('services.msg91.auth_key')) && !empty(config('services.msg91.whatsapp_number'))) {
+                $waResult = \App\Services\Msg91WhatsAppService::sendOtp($this->restaurantPhoneNumber, $this->generatedOtp, $this->fullName ?: 'Partner');
+                if (!$waResult['success']) {
+                    \Illuminate\Support\Facades\Log::warning('WhatsApp OTP error: ' . ($waResult['message'] ?? 'Failed to send'));
+                }
+            } elseif (config('services.fast2sms.enabled') && !empty(config('services.fast2sms.key'))) {
+                $smsResult = \App\Services\Fast2SmsService::sendOtp($this->restaurantPhoneNumber, $this->generatedOtp);
+                if (!$smsResult['success']) {
+                    throw new \Exception($smsResult['message'] ?? 'Failed to send SMS');
+                }
+            } else {
+                $restaurant = new User();
+                $restaurant->phone_number = $this->restaurantPhoneNumber;
+                $restaurant->phone_code = $this->restaurantPhoneCode;
+                $restaurant->notify(new SendVerifyOtp($this->generatedOtp));
+            }
+
             $this->showOtpField = true;
             $this->phoneVerified = false;
             $this->otpCode = '';

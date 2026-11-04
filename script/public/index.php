@@ -3,15 +3,15 @@
 use Illuminate\Http\Request;
 
 
-if (!file_exists('../.env')) {
+if (!file_exists(__DIR__ . '/../.env')) {
     $GLOBALS["error_type"] = "env-missing";
-    include('error_install.php');
+    include(__DIR__ . '/error_install.php');
     exit(1);
 }
 
 if (version_compare(PHP_VERSION, '8.3.0') < 0) {
     $GLOBALS["error_type"] = "php-version";
-    include('error_install.php');
+    include(__DIR__ . '/error_install.php');
     exit(1);
 }
 

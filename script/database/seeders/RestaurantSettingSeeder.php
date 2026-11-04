@@ -99,8 +99,8 @@ class RestaurantSettingSeeder extends Seeder
             $setting->address = $i === 0 ? $jaipur['address'] : fake()->address();
             $setting->phone_number = fake()->e164PhoneNumber();
             $setting->timezone = $country?->countries_code === 'IN' ? 'Asia/Kolkata' : 'America/New_York';
-            $setting->theme_hex = '#00b692';
-            $setting->theme_rgb = '0, 182, 146';
+            $setting->theme_hex = '#2E6F40';
+            $setting->theme_rgb = '46, 111, 64';
             $setting->email = str()->slug($companyName, '.') . '@example.com';
             $setting->country_id = $country->id;
             $setting->package_id = 1;

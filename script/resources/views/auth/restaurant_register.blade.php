@@ -23,9 +23,9 @@
         border: 1px solid #e5e7eb !important;
     }
     html.dark .auth-card-container {
-        background-color: #10201b !important;
-        border: 1px solid #1c382f !important;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+        background-color: #253D2C !important;
+        border: 1.5px solid #68BA7F !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
     }
 
     /* Titles & Subtitles */
@@ -87,8 +87,8 @@
     html.dark .auth-card-container select,
     html.dark .auth-card-container textarea,
     html.dark .auth-card-container [x-data] > div:first-child {
-        background-color: #152922 !important;
-        border: 1.5px solid #204035 !important;
+        background-color: #1a2c20 !important;
+        border: 1.5px solid #33533c !important;
         color: #ffffff !important;
     }
     html.dark .auth-card-container input::placeholder {
@@ -99,15 +99,15 @@
     .auth-card-container input:focus,
     .auth-card-container select:focus,
     .auth-card-container textarea:focus {
-        border-color: #00b692 !important;
+        border-color: #68BA7F !important;
         outline: none !important;
-        box-shadow: 0 0 0 3px rgba(0, 182, 146, 0.25) !important;
+        box-shadow: 0 0 0 3px rgba(104, 186, 127, 0.25) !important;
     }
 
     /* Primary Buttons */
     .auth-card-container button[type="submit"],
     .auth-card-container button.button {
-        background-color: #00b692 !important;
+        background-color: #2E6F40 !important;
         color: #ffffff !important;
         font-weight: 700 !important;
         font-size: 16px !important;
@@ -119,21 +119,21 @@
         align-items: center !important;
         justify-content: center !important;
         cursor: pointer !important;
-        box-shadow: 0 4px 16px rgba(0, 182, 146, 0.35) !important;
+        box-shadow: 0 4px 16px rgba(46, 111, 64, 0.35) !important;
         transition: all 0.2s ease !important;
         margin-top: 16px !important;
     }
     .auth-card-container button[type="submit"]:hover,
     .auth-card-container button.button:hover {
-        background-color: #009c7d !important;
-        box-shadow: 0 6px 20px rgba(0, 182, 146, 0.45) !important;
+        background-color: #253D2C !important;
+        box-shadow: 0 6px 20px rgba(37, 61, 44, 0.5) !important;
     }
 
     /* Checkboxes & Inline Text */
     .auth-card-container input[type="checkbox"] {
         width: 16px !important;
         height: 16px !important;
-        accent-color: #00b692 !important;
+        accent-color: #2E6F40 !important;
         cursor: pointer !important;
         border-radius: 4px !important;
     }
@@ -155,7 +155,7 @@
         <x-validation-errors class="mb-4"/>
 
         @session('status')
-        <div style="margin-bottom: 16px; font-size: 14px; font-weight: 500; color: #00b692; background: rgba(0,182,146,0.1); padding: 12px 16px; border-radius: 10px; border: 1px solid rgba(0,182,146,0.2);">
+        <div style="margin-bottom: 16px; font-size: 14px; font-weight: 600; color: #253D2C; background: #CFFFDC; padding: 12px 16px; border-radius: 10px; border: 1.5px solid #68BA7F;">
             {{ $value }}
         </div>
         @endsession
@@ -166,7 +166,7 @@
         <div style="text-align: center; margin-top: 24px; display: flex; flex-direction: column; gap: 10px;">
             <div class="auth-subtitle" style="font-size: 14px; font-weight: 500;">
                 Already have an account? 
-                <a href="{{ route('login') }}" style="color: #00b692; font-weight: 700; text-decoration: none; margin-left: 4px;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
+                <a href="{{ route('login') }}" style="color: #2E6F40; font-weight: 700; text-decoration: none; margin-left: 4px;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">
                     Log in
                 </a>
             </div>
