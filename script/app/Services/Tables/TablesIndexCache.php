@@ -9,6 +9,7 @@ use App\Models\Table;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Caches the heavy tables-by-area tree for /tables. Volatile fields (locks, orders,
@@ -195,7 +196,7 @@ class TablesIndexCache
      */
     private static function loadActiveAssignmentsByTableId(array $tableIds): array
     {
-        if ($tableIds === []) {
+        if ($tableIds === [] || ! Schema::hasTable('assign_waiter_to_tables')) {
             return [];
         }
 

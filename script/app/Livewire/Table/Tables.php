@@ -281,27 +281,37 @@ class Tables extends Component
 
     public function render()
     {
-        $branchId = (int) branch()->id;
-        $payload = TablesIndexCache::get($branchId);
+        $branch = branch();
+        $branchId = (int) ($branch ? $branch->id : (user()?->branch_id ?? 0));
+
+        $restaurant = restaurant();
+        $restaurantId = (int) ($restaurant ? $restaurant->id : (user()?->restaurant_id ?? 0));
+
+        $payload = $branchId > 0 ? TablesIndexCache::get($branchId) : ['areas' => []];
         $tablesPayload = $this->filterPayloadForWaiter($payload);
 
-        $waiters = PosWaitersCache::remember((int) restaurant()->id, $branchId)
-            ->map(fn (User $w) => ['id' => $w->id, 'name' => $w->name])
-            ->values()
-            ->all();
+        $waiters = ($restaurantId > 0 && $branchId > 0)
+            ? PosWaitersCache::remember($restaurantId, $branchId)
+                ->map(fn (User $w) => ['id' => $w->id, 'name' => $w->name])
+                ->values()
+                ->all()
+            : [];
+
+        $algo = in_array('xxh128', hash_algos()) ? 'xxh128' : 'sha256';
+        $signature = hash($algo, (string) json_encode($tablesPayload, JSON_INVALID_UTF8_SUBSTITUTE));
 
         return view('livewire.table.tables', [
             'tablesPayload' => $tablesPayload,
-            'tablesPayloadSignature' => hash('xxh128', (string) json_encode($tablesPayload, JSON_INVALID_UTF8_SUBSTITUTE)),
-            'areasList' => collect($payload['areas'])->map(fn ($a) => ['id' => $a['id'], 'area_name' => $a['area_name']])->values()->all(),
+            'tablesPayloadSignature' => $signature,
+            'areasList' => collect($payload['areas'] ?? [])->map(fn ($a) => ['id' => $a['id'], 'area_name' => $a['area_name']])->values()->all(),
             'waiters' => $waiters,
-            'authUserId' => (int) user()->id,
-            'isRestaurantAdmin' => user()->hasRole('Admin_'.user()->restaurant_id),
-            'isWaiterRole' => user()->hasRole('Waiter_'.user()->restaurant_id),
-            'canCreateTable' => user_can('Create Table'),
-            'canUpdateTable' => user_can('Update Table'),
-            'canShowOrder' => user_can('Show Order'),
-            'canCreateOrder' => user_can('Create Order'),
+            'authUserId' => (int) (user()?->id ?? 0),
+            'isRestaurantAdmin' => user() && $restaurantId ? user()->hasRole('Admin_'.$restaurantId) : false,
+            'isWaiterRole' => user() && $restaurantId ? user()->hasRole('Waiter_'.$restaurantId) : false,
+            'canCreateTable' => function_exists('user_can') ? user_can('Create Table') : false,
+            'canUpdateTable' => function_exists('user_can') ? user_can('Update Table') : false,
+            'canShowOrder' => function_exists('user_can') ? user_can('Show Order') : false,
+            'canCreateOrder' => function_exists('user_can') ? user_can('Create Order') : false,
             'tablesUi' => [
                 'list' => __('app.list'),
                 'grid' => __('app.grid'),

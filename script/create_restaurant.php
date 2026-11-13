@@ -21,7 +21,7 @@ try {
     $restaurant->email = 'restaurant@example.com';
     $restaurant->phone_number = '9876543210';
     $restaurant->timezone = 'Asia/Kolkata';
-    $restaurant->theme_hex = '#00b692';
+    $restaurant->theme_hex = '#2E6F40';
     $restaurant->package_id = $package ? $package->id : 1;
     $restaurant->package_type = 'monthly';
     $restaurant->license_type = 'paid';
